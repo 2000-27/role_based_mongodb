@@ -12,9 +12,9 @@ def user_check(username):
             return False
         else :
           return True    
- 
+
+
 def is_email_exit(email):
-    
      print("your email is",email)
      is_email_exit=mongo.db.users.find_one({"email":email})
      print("your email is exit in record is ",is_email_exit) 
