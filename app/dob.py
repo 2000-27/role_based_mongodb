@@ -58,7 +58,7 @@ def task_delete(task):
     return msg
 
 
-def task_update(task):
+def update_task(task):
     if not task_exist(task['email']):
         msg = "task does not exit"
         return msg  

@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint
 from app.token import admin_required
-from app.dob import add_user, user_task, task_delete
+from app.dob import add_user, user_task, task_delete, update_task
 from json import dumps, loads
 from marshmallow import ValidationError
 from app.schema import UserSchema, TaskSchema, LoginSchema, UpdateSchema
@@ -8,8 +8,7 @@ admin_bp = Blueprint("create-user", __name__)
 admin_task = Blueprint("create-task", __name__)
 
 
-
-@admin_bp.route('/create-user', methods=['POST'])
+@admin_bp.route('/create-user', endpoint='create_user', methods=['POST'])
 @admin_required
 def create_user():
     msg = ""
@@ -25,7 +24,7 @@ def create_user():
     return jsonify({"msg": msg})
 
 
-@admin_task.route('/task', methods=['POST'])
+@admin_task.route('/create-task', endpoint='create_task', methods=['POST'])
 @admin_required
 def create_task():
     msg = ""
@@ -41,7 +40,7 @@ def create_task():
     return jsonify({"msg": msg})
 
 
-@admin_task.route('/task', methods=['DELETE'])
+@admin_task.route('/delete-task', endpoint='deletetask', methods=['DELETE'])
 @admin_required
 def deletetask():
     msg = ""
@@ -57,7 +56,7 @@ def deletetask():
     return jsonify({"msg": msg})
 
 
-@admin_task.route('/task', methods=['PATCH'])
+@admin_task.route('/update-task', endpoint='updatetask', methods=['PATCH'])
 @admin_required
 def updatetask():
     msg = ""
