@@ -5,9 +5,8 @@ from json import dumps, loads
 from marshmallow import ValidationError
 from app.schema import UserSchema, TaskSchema, LoginSchema, UpdateSchema
 admin_bp = Blueprint("create-user", __name__)
-assign_task = Blueprint("create-task", __name__)
-delete_task = Blueprint("delete-task", __name__)
-update_task = Blueprint("update-task", __name__)
+admin_task = Blueprint("create-task", __name__)
+
 
 
 @admin_bp.route('/create-user', methods=['POST'])
@@ -26,7 +25,7 @@ def create_user():
     return jsonify({"msg": msg})
 
 
-@assign_task.route('/task', methods=['POST'])
+@admin_task.route('/task', methods=['POST'])
 @admin_required
 def create_task():
     msg = ""
@@ -42,7 +41,7 @@ def create_task():
     return jsonify({"msg": msg})
 
 
-@delete_task.route('/task', methods=['DELETE'])
+@admin_task.route('/task', methods=['DELETE'])
 @admin_required
 def deletetask():
     msg = ""
@@ -58,7 +57,7 @@ def deletetask():
     return jsonify({"msg": msg})
 
 
-@update_task.route('/task', methods=['PATCH'])
+@admin_task.route('/task', methods=['PATCH'])
 @admin_required
 def updatetask():
     msg = ""

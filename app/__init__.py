@@ -30,12 +30,11 @@ def create_app(test_config=None):
 
     db.get_db(mongo=mongo, app=app)
     from app.api.auth import auth
-    from app.api.admin import admin_bp, assign_task, delete_task, update_task
+    from app.api.admin import admin_bp, admin_task
     app.register_blueprint(auth, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(assign_task, url_prefix='/admin/assign')
-    app.register_blueprint(delete_task, url_prefix='/admin/delete')
-    app.register_blueprint(update_task, url_prefix='/admin/update')
+    app.register_blueprint(admin_task, url_prefix='/admin/assign')
+
     return app
 
 
