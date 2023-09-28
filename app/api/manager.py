@@ -1,17 +1,23 @@
-from flask import request , jsonify , Blueprint 
-from app.token import  manager_required
-from app.dob import insert_data
+from flask import request, jsonify, Blueprint
+from app.token import manager_required
+from app.dob import add_user
+from json import dumps, loads
+from marshmallow import ValidationError
+from app.schema import UserSchema
+admin_bp = Blueprint("create-user", __name__)
 
-admin_bp = Blueprint("create-user",__name__)
-@admin_bp.route('/create-user', methods =['POST'])
+
+@admin_bp.route('/create-user', methods=['POST'])
 @manager_required
-def create():         
-        json_body = request.get_json()
-        user_name =json_body['user_name']
-        email = json_body['email']
-        password = json_body['password']
-        confirm_password = json_body['confirm_password']
-        role=json_body['role']
-        msg=insert_data(user_name,password,confirm_password,email,role)
-        return jsonify({"msg":msg})
-      
+def create():
+    msg = ""
+    request_data = request.get_json()
+    user_schema = UserSchema()
+    try:
+        result = user_schema.load(request_data)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    data_now_json_str = dumps(result)
+    user = loads(data_now_json_str)
+    msg = add_user(user)
+    return jsonify({"msg": msg})

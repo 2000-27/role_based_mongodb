@@ -1,3 +1,2 @@
-import os
-
-SECRET_KEY = os.environ['SECRET_KEY']
+algor = "HS256"
+SECRET_KEY = "SECRET_KEY"

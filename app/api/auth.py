@@ -1,37 +1,48 @@
-from flask import Blueprint, request , jsonify 
-from app import db ,mongo 
-from  app.dob import insert_data 
-import jwt 
-
+from flask import Blueprint, request, jsonify
+from marshmallow import ValidationError
+from json import dumps, loads
+from app import mongo
+from app.config import algor
+from app.schema import UserSchema, LoginSchema
+from app.dob import add_user
+import jwt
 auth = Blueprint('auth', __name__, url_prefix='/auth')
+
+
 @auth.route('/register', methods=['POST'])
 def register():
-     msg=""
-     json_body = request.get_json() 
-     user_name =json_body['user_name']
-     email = json_body['email']
-     password = json_body['password']
-     confirm_password = json_body['confirm_password']
-     role=json_body['role']
-     msg=insert_data(user_name,password,confirm_password,email,role)       
-     return jsonify({"msg":msg})
+    msg = ""
+    request_data = request.get_json()
+    userschema = UserSchema()
+    try:
+        result = userschema.load(request_data)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    data_now_json_str = dumps(result)
+    user = loads(data_now_json_str)
+    msg = add_user(user)
+    return jsonify({"msg": msg})
 
 
 @auth.route('/login', methods=['POST'])
 def login():
-    try :  
-      json_body = request.get_json() 
-      user_name =json_body['user_name']
-      email = json_body['email']
-      password = json_body['password']
-      is_user_exit=mongo.db.users.find_one({"email":email})
-      user_id=is_user_exit['_id']
-      if is_user_exit is None:
-         return jsonify({'msg':"Signup Please"})                
-      else:  
-        encoded_jwt = jwt.encode({"user_id": str(user_id)}, "secret", algorithm="HS256")
-        return jsonify(message="Login successfully" , access_token=encoded_jwt)
-    except Exception as err:
-        print("your errrorr is ",err)
-         
-        return jsonify("therer is error")
+    request_data = request.get_json()
+    login_schema = LoginSchema()
+    try:
+        result = login_schema.load(request_data)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    data_now_json_str = dumps(result)
+    user = loads(data_now_json_str)
+
+    user = mongo.db.users.find_one({"email": user['email']})
+    user_id = user['_id']
+    if user is None:
+        return jsonify({'msg': "there is no user ,please signup"})
+    encoded_jwt = jwt.encode(
+        {
+            "user_id": str(user_id)
+        }, "secret", algorithm=algor
+    )
+    return jsonify(message="Login successfully", access_token=encoded_jwt)
