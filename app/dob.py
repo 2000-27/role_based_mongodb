@@ -1,19 +1,15 @@
-from .util import (email_check, user_check,
-                   user_exist, task_assign_to, task_exist)
+from .util import user_check, user_exist, task_check
 from . import mongo
 
 
 def add_user(user):
-    is_user_name_valid = user_check(user['user_name'])
     if user_exist(user['email']):
         msg = "this email is already register"
         return msg
     if user['confirm_password'] != user['password']:
         msg = "Password and confirm password should be same"
         return msg
-    if email_check(user['email']):
-        msg = "Please enter a valid email address"
-        return msg
+    is_user_name_valid = user_check(user['user_name'])
     if is_user_name_valid is False:
         msg = "Please enter a valid username"
         return msg
@@ -27,29 +23,26 @@ def add_user(user):
     return msg
 
 
-def user_task(task):
-    if email_check(task['email']):
-        msg = "Please enter a valid email address"
-        return msg
+def user_task(task, assign_by):
     if not user_exist(task['email']):
-        msg = "user does not exit"
+        msg = "user does not exist"
         return msg
-    if task_assign_to(task['email']):
+    if task_check(task['email']):
         msg = "task is already assign"
         return msg
     mongo.db.tasks.insert_one({
-                "assigned_by": "ADMIN",
+                "assigned_by": assign_by,
                 "email": task['email'],
-                "password": task['task'],
-                "username": task['due_date'],
+                "task": task['task'],
+                "due_date": task['due_date'],
                 }).inserted_id
-    msg = "task assigned"
+    msg = "task is assigned"
     return msg
 
 
 def task_delete(task):
-    if not task_exist(task['email']):
-        msg = "task does not exit"
+    if not task_check(task['email']):
+        msg = "did't assign any task"
         return msg
     mongo.db.tasks.delete_one({
         "email": task['email']
@@ -58,13 +51,12 @@ def task_delete(task):
     return msg
 
 
-def update_task(task):
-    if not task_exist(task['email']):
-        msg = "task does not exit"
-        return msg  
-    mongo.db.tasks.update_one(
-        {"email": task['email']},
-
-        {set: {"task": "new task"}})
+def update(task):
+    if not task_check(task['email']):
+        msg = "did't assign any task"
+        return msg
+    filter = {'email': task['email']}
+    newvalues = {"$set": {'task': task['task']}}
+    mongo.db.tasks.update_one(filter, newvalues)
     msg = "task is update"
     return msg

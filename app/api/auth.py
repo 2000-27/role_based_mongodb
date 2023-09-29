@@ -6,6 +6,7 @@ from app.config import algor
 from app.schema import UserSchema, LoginSchema
 from app.dob import add_user
 import jwt
+
 auth = Blueprint('auth', __name__, url_prefix='/auth')
 
 
@@ -34,15 +35,11 @@ def login():
     except ValidationError as err:
         return jsonify(err.messages), 400
     data_now_json_str = dumps(result)
-    user = loads(data_now_json_str)
-
-    user = mongo.db.users.find_one({"email": user['email']})
-    user_id = user['_id']
+    data = loads(data_now_json_str)
+    user = mongo.db.users.find_one({"email": data['email']})
     if user is None:
         return jsonify({'msg': "there is no user ,please signup"})
-    encoded_jwt = jwt.encode(
-        {
-            "user_id": str(user_id)
-        }, "secret", algorithm=algor
-    )
+    user_id = user['_id']
+    encoded_jwt = jwt.encode({"user_id": str(user_id)},
+                             "secret", algorithm=algor)
     return jsonify(message="Login successfully", access_token=encoded_jwt)

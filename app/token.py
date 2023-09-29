@@ -1,18 +1,16 @@
 import jwt
-from flask import request, abort
+from flask import request, abort, jsonify
 from . import mongo
 from bson.objectid import ObjectId
 
 
-def token_decode():
-    payload = request.headers["Authorization"]
+def token_decode(payload):
     payload = payload.split(" ")[1]
     decoded_jwt = jwt.decode(payload, "secret", algorithms=["HS256"])
     return decoded_jwt
 
 
-def user_role():
-    decoded_jwt = token_decode()
+def user_details(decoded_jwt):
     user_id = decoded_jwt['user_id']
     bson_object = ObjectId(user_id)
     user = mongo.db.users.find_one({"_id": bson_object})
@@ -21,8 +19,14 @@ def user_role():
 
 def admin_required(f):
     def decorator():
-        record = user_role()
-        if record['role'] != "ADMIN":
+        payload = request.headers["Authorization"]
+        try:
+            decoded_jwt = token_decode(payload)
+        except Exception:
+            return jsonify({"message": "Invalid token!"})
+        user = user_details(decoded_jwt)
+        print("your user is is ", user)
+        if user['role'] != "ADMIN":
             abort(401)
         return f()
     return decorator
@@ -30,8 +34,31 @@ def admin_required(f):
 
 def manager_required(f):
     def decorator():
-        record = user_role()
-        if record['role'] != "MANAGER":
+        payload = request.headers["Authorization"]
+        try:
+            decoded_jwt = token_decode(payload)
+        except Exception as err:
+            print("your error is ", err)
+            return jsonify({"message": "Invalid token!"})
+        user = user_details(decoded_jwt)
+        print("your user is is ", user)
+        if user['role'] != "MANAGER":
+            abort(401)
+        return f()
+    return decorator
+
+
+def employee_required(f):
+    def decorator():
+        payload = request.headers["Authorization"]
+        try:
+            decoded_jwt = token_decode(payload)
+        except Exception as err:
+            print("your error is ", err)
+            return jsonify({"message": "Invalid token!"})
+        user = user_details(decoded_jwt)
+        print("your user is is ", user)
+        if user['role'] != "EMPOYEE":
             abort(401)
         return f()
     return decorator

@@ -1,12 +1,8 @@
 from . import mongo
 import re
-
-
-def email_check(email):
-    if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
-        return True
-    else:
-        return False
+from flask import request, jsonify
+from json import dumps, loads
+from marshmallow import ValidationError
 
 
 def user_check(username):
@@ -24,7 +20,7 @@ def user_exist(email):
         return True
 
 
-def task_assign_to(email):
+def task_check(email):
     user = mongo.db.tasks.find_one({"email": email})
     if user is None:
         return False
@@ -32,9 +28,13 @@ def task_assign_to(email):
         return True
 
 
-def task_exist(email):
-    user = mongo.db.tasks.find_one({"email": email})
-    if user is None:
-        return False
-    else:
-        return True
+def data_now_json_str(schema):
+    request_data = request.get_json()
+    try:
+        result = schema.load(request_data)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    data_now_json_str = dumps(result)
+    data = loads(data_now_json_str)
+    print("data",data)
+    return data

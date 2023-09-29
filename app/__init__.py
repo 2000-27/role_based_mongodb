@@ -24,17 +24,19 @@ def create_app(test_config=None):
     def not_found(error):
         return make_response(jsonify(error='Not found'), 400)
 
-    @app.errorhandler(500)
-    def error_500(error):
-        return make_response({}, 500)
+    # @app.errorhandler(500)
+    # def error_500(error):
+    #     return make_response({}, 500)
 
     db.get_db(mongo=mongo, app=app)
     from app.api.auth import auth
-    from app.api.admin import admin_bp, admin_task
+    from app.api.admin import admin_bp
+    from app.api.manager import manager_bp
+    from app.api.employee import employee_bp 
     app.register_blueprint(auth, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(admin_task, url_prefix='/admin/assign')
-
+    app.register_blueprint(manager_bp, url_prefix='/manager')
+    app.register_blueprint(employee_bp, url_prefix='/employee')
     return app
 
 
