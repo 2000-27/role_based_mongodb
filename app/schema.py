@@ -16,9 +16,20 @@ class UserSchema(LoginSchema, EmployeeSchema):
 
 
 class TaskSchema(EmployeeSchema):
-    task = fields.String(required=True)
+    description = fields.String(required=True)
     due_date = fields.String(required=True)
 
 
 class InfoSchema(EmployeeSchema):
-    task = fields.String(required=True)
+    task_descrption = fields.String(required=True)
+
+
+class UpdateSchema(Schema):
+    task_id = fields.String(required=True)
+    new_task = fields.Str(required=True)
+
+
+class UpdateStatus(Schema):
+    task_id = fields.String(required=True)
+    status = fields.Str(required=True)
+

@@ -17,15 +17,19 @@ def user_details(decoded_jwt):
     return user
 
 
+def valid_token():
+    payload = request.headers["Authorization"]
+    try:
+        decoded_jwt = token_decode(payload)
+    except Exception:
+        return jsonify({"message": "Invalid token!"})
+    user = user_details(decoded_jwt)
+    return user
+   
+
 def admin_required(f):
     def decorator():
-        payload = request.headers["Authorization"]
-        try:
-            decoded_jwt = token_decode(payload)
-        except Exception:
-            return jsonify({"message": "Invalid token!"})
-        user = user_details(decoded_jwt)
-        print("your user is is ", user)
+        user = valid_token()
         if user['role'] != "ADMIN":
             abort(401)
         return f()
@@ -34,14 +38,7 @@ def admin_required(f):
 
 def manager_required(f):
     def decorator():
-        payload = request.headers["Authorization"]
-        try:
-            decoded_jwt = token_decode(payload)
-        except Exception as err:
-            print("your error is ", err)
-            return jsonify({"message": "Invalid token!"})
-        user = user_details(decoded_jwt)
-        print("your user is is ", user)
+        user = valid_token()
         if user['role'] != "MANAGER":
             abort(401)
         return f()
@@ -50,14 +47,7 @@ def manager_required(f):
 
 def employee_required(f):
     def decorator():
-        payload = request.headers["Authorization"]
-        try:
-            decoded_jwt = token_decode(payload)
-        except Exception as err:
-            print("your error is ", err)
-            return jsonify({"message": "Invalid token!"})
-        user = user_details(decoded_jwt)
-        print("your user is is ", user)
+        user = valid_token
         if user['role'] != "EMPOYEE":
             abort(401)
         return f()

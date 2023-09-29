@@ -21,8 +21,8 @@ def user_exist(email):
 
 
 def task_check(email):
-    user = mongo.db.tasks.find_one({"email": email})
-    if user is None:
+    task = mongo.db.tasks.find_one({"email": email})
+    if task is None:
         return False
     else:
         return True
@@ -36,5 +36,5 @@ def data_now_json_str(schema):
         return jsonify(err.messages), 400
     data_now_json_str = dumps(result)
     data = loads(data_now_json_str)
-    print("data",data)
+   
     return data

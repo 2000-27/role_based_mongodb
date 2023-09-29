@@ -1,5 +1,6 @@
 from .util import user_check, user_exist, task_check
 from . import mongo
+from bson.objectid import ObjectId
 
 
 def add_user(user):
@@ -27,13 +28,14 @@ def user_task(task, assign_by):
     if not user_exist(task['email']):
         msg = "user does not exist"
         return msg
-    if task_check(task['email']):
-        msg = "task is already assign"
-        return msg
+    user = mongo.db.users.find_one({"email": task['email']})
+    
     mongo.db.tasks.insert_one({
+                 "user_id": user['_id'],
                 "assigned_by": assign_by,
-                "email": task['email'],
-                "task": task['task'],
+                "email": task['email'],           
+                "task_description": task['description'],
+                "status": "todo",
                 "due_date": task['due_date'],
                 }).inserted_id
     msg = "task is assigned"
@@ -51,12 +53,25 @@ def task_delete(task):
     return msg
 
 
-def update(task):
-    if not task_check(task['email']):
-        msg = "did't assign any task"
-        return msg
-    filter = {'email': task['email']}
-    newvalues = {"$set": {'task': task['task']}}
+def update_description(task):
+    filter = {'_id': ObjectId(task['task_id'])}
+    newvalues = {"$set": {'task_description': task['new_task']}}  
     mongo.db.tasks.update_one(filter, newvalues)
     msg = "task is update"
     return msg
+
+
+def update_status(task):
+    filter = {'_id': ObjectId(task['task_id'])}
+    newvalues = {"$set": {'status': task['status']}}  
+    mongo.db.tasks.update_one(filter, newvalues)
+    msg = "task is update"
+    return msg    
+
+
+def update_admin(task):
+    filter = {'_id': ObjectId(task['task_id'])}
+    newvalues = {"$set": {'email': task['email']}}  
+    mongo.db.tasks.update_one(filter, newvalues)
+    msg = "task is update"
+    return msg    

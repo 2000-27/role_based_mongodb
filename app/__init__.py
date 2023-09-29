@@ -26,7 +26,7 @@ def create_app(test_config=None):
 
     # @app.errorhandler(500)
     # def error_500(error):
-    #     return make_response({}, 500)
+    #     return make_response(jsonify(error="internal Server error"), 500)
 
     db.get_db(mongo=mongo, app=app)
     from app.api.auth import auth
