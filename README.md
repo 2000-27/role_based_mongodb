@@ -1,0 +1,6 @@
+-> create a  register, signup api 
+-> admin can add manager and employee
+-> manager can add only employee
+-> . Admin can create/get/delete/update and assign task to Manager and Employee.
+->. Manager can create/delete/update task of Employee only.
+->. Employee can see task that only assigned to him/her.
