@@ -24,9 +24,9 @@ def create_app(test_config=None):
     def not_found(error):
         return make_response(jsonify(error='Not found'), 400)
 
-    # @app.errorhandler(500)
-    # def error_500(error):
-    #     return make_response(jsonify(error="internal Server error"), 500)
+    @app.errorhandler(500)
+    def error_500(error):
+        return make_response(jsonify(error="internal Server error"), 500)
 
     db.get_db(mongo=mongo, app=app)
     from app.api.auth import auth

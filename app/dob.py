@@ -55,23 +55,23 @@ def task_delete(task):
 
 def update_description(task):
     filter = {'_id': ObjectId(task['task_id'])}
-    newvalues = {"$set": {'task_description': task['new_task']}}  
-    mongo.db.tasks.update_one(filter, newvalues)
+    new_description = {"$set": {'task_description': task['new_task']}}  
+    mongo.db.tasks.update_one(filter, new_description)
     msg = "task is update"
     return msg
 
 
 def update_status(task):
     filter = {'_id': ObjectId(task['task_id'])}
-    newvalues = {"$set": {'status': task['status']}}  
-    mongo.db.tasks.update_one(filter, newvalues)
+    newvstatus = {"$set": {'status': task['status']}}  
+    mongo.db.tasks.update_one(filter, newvstatus)
     msg = "task is update"
     return msg    
 
 
 def update_admin(task):
     filter = {'_id': ObjectId(task['task_id'])}
-    newvalues = {"$set": {'email': task['email']}}  
-    mongo.db.tasks.update_one(filter, newvalues)
+    newvemail = {"$set": {'email': task['email']}}  
+    mongo.db.tasks.update_one(filter, newvemail)
     msg = "task is update"
     return msg    
