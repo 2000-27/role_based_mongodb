@@ -14,9 +14,9 @@ auth = Blueprint('auth', __name__, url_prefix='/auth')
 def register():
     msg = ""
     request_data = request.get_json()
-    userschema = UserSchema()
+    user_schema = UserSchema()
     try:
-        result = userschema.load(request_data)
+        result = user_schema.load(request_data)
     except ValidationError as err:
         return jsonify(err.messages), 400
 

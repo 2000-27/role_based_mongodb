@@ -1,6 +1,7 @@
 from .util import user_check, user_exist, task_check
 from . import mongo
 from bson.objectid import ObjectId
+from flask_bcrypt import generate_password_hash
 
 
 def add_user(user):
@@ -14,9 +15,10 @@ def add_user(user):
     if is_user_name_valid is False:
         msg = "Please enter a valid username"
         return msg
+    hash_password = generate_password_hash(user['password'])
     mongo.db.users.insert_one({
                 "email": user['email'],
-                "password": user['password'],
+                "password": hash_password,
                 "username": user['user_name'],
                 "role": user['role'],
                 }).inserted_id
@@ -53,25 +55,21 @@ def task_delete(task):
     return msg
 
 
-def update_description(task):
+def update(task):
     filter = {'_id': ObjectId(task['task_id'])}
-    new_description = {"$set": {'task_description': task['new_task']}}  
-    mongo.db.tasks.update_one(filter, new_description)
+    keysList = list(task.keys())
+    print("mykeylist is ", keysList)
+
+    if 'new_task' in keysList:
+        new_task = {"$set": {'task_description': task['new_task']}}  
+        mongo.db.tasks.update_one(filter, new_task)
+    
+    if 'status' in keysList:
+        new_status = {"$set": {'status': task['status']}}
+        mongo.db.tasks.update_one(filter, new_status)
+    if 'email' in keysList:
+        new_status = {"$set": {'email': task['email']}}
+        mongo.db.tasks.update_one(filter, new_status)
+
     msg = "task is update"
     return msg
-
-
-def update_status(task):
-    filter = {'_id': ObjectId(task['task_id'])}
-    newvstatus = {"$set": {'status': task['status']}}  
-    mongo.db.tasks.update_one(filter, newvstatus)
-    msg = "task is update"
-    return msg    
-
-
-def update_admin(task):
-    filter = {'_id': ObjectId(task['task_id'])}
-    newvemail = {"$set": {'email': task['email']}}  
-    mongo.db.tasks.update_one(filter, newvemail)
-    msg = "task is update"
-    return msg    

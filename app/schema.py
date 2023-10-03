@@ -21,15 +21,11 @@ class TaskSchema(EmployeeSchema):
 
 
 class InfoSchema(EmployeeSchema):
-    task_descrption = fields.String(required=True)
+    description = fields.String(required=True)
 
 
 class UpdateSchema(Schema):
     task_id = fields.String(required=True)
-    new_task = fields.Str(required=True)
-
-
-class UpdateStatus(Schema):
-    task_id = fields.String(required=True)
-    status = fields.Str(required=True)
-
+    new_task = fields.Str(required=False)
+    status = fields.Str(required=False)
+    email = fields.Str(required=False)

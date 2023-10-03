@@ -37,7 +37,6 @@ def create_app(test_config=None):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(manager_bp, url_prefix='/manager')
     app.register_blueprint(employee_bp, url_prefix='/employee')
-    return app
-
+    return app 
 
 create_app()
