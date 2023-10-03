@@ -48,7 +48,7 @@ def manager_required(f):
 def employee_required(f):
     def decorator():
         user = valid_token()
-        if user['role'] != "EMPOYEE":
+        if user['role'] != "EMPLOYEE":
             abort(401)
         return f()
     return decorator

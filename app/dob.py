@@ -55,21 +55,18 @@ def task_delete(task):
     return msg
 
 
+def updatefield(filter, data):
+    field = {"$set": data}
+    mongo.db.tasks.update_one(filter, field)
+
+
 def update(task):
     filter = {'_id': ObjectId(task['task_id'])}
     keysList = list(task.keys())
-    print("mykeylist is ", keysList)
-
-    if 'new_task' in keysList:
-        new_task = {"$set": {'task_description': task['new_task']}}  
-        mongo.db.tasks.update_one(filter, new_task)
-    
-    if 'status' in keysList:
-        new_status = {"$set": {'status': task['status']}}
-        mongo.db.tasks.update_one(filter, new_status)
-    if 'email' in keysList:
-        new_status = {"$set": {'email': task['email']}}
-        mongo.db.tasks.update_one(filter, new_status)
+    for field in keysList:
+        if field != "task_id":
+            data = {field: task[field]}
+            updatefield(filter, data)
 
     msg = "task is update"
     return msg

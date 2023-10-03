@@ -29,3 +29,11 @@ class UpdateSchema(Schema):
     new_task = fields.Str(required=False)
     status = fields.Str(required=False)
     email = fields.Str(required=False)
+
+
+class ViewSchema(EmployeeSchema):
+    task_id = fields.String(required=True)
+
+
+class StatusSchema(EmployeeSchema):
+    status = fields.Str(required=True)

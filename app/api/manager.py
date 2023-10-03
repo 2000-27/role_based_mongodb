@@ -1,6 +1,6 @@
 from flask import jsonify, Blueprint
 from app.token import manager_required
-from app.dob import add_user, user_task, task_delete
+from app.dob import add_user, user_task, task_delete, update
 from app.util import data_now_json_str
 from app.schema import TaskSchema, UserSchema, InfoSchema
 manager_bp = Blueprint("manager", __name__, url_prefix="manager")
@@ -42,5 +42,5 @@ def update_task():
     msg = ""
     info_schema = InfoSchema()
     task = data_now_json_str(info_schema)
-   # msg = update(task)
+    msg = update(task)
     return jsonify({"msg": msg})

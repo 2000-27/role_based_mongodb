@@ -36,5 +36,4 @@ def data_now_json_str(schema):
         return jsonify(err.messages), 400
     data_now_json_str = dumps(result)
     data = loads(data_now_json_str)
-    print("YTFVYBGJNBVHFBGYJHYU", data)
     return data
