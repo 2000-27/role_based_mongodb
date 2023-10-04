@@ -1,4 +1,4 @@
-from .util import user_check, user_exist, task_exit, role_valid
+from .util import user_check, user_exist, task_exit, role_valid, check_status
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
@@ -69,10 +69,11 @@ def task_delete(task):
 
 
 def update(task):
-    status_list = ["odo", "in-progress", "under-review", "done"]  
-    if task['status'].casefold() not in status_list:
-        msg = "enter a valid status"
-        return msg
+    keysList = list(task.keys())
+    if 'status' in keysList:
+        msg = check_status(task)
+        if msg is not None:
+            return msg
     filter = {'_id': ObjectId(task['task_id'])}
     keysList = list(task.keys())
     for field in keysList:

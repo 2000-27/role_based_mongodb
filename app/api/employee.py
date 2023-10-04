@@ -42,6 +42,9 @@ def view_task():
 def change_status():
     msg = ""
     status_schema = StatusSchema()
-    task = data_now_json_str(status_schema)
-    msg = update(task)
+    try:
+        task = data_now_json_str(status_schema)
+        msg = update(task)
+    except Exception as err:
+        return jsonify({"err": str(err)})
     return jsonify({"msg": msg})

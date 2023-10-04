@@ -48,6 +48,14 @@ def role_valid(role):
         return True
 
 
+def check_status(task):
+    status_list = ["todo", "in-progress", "under-review", "done"]  
+    if task['status'].casefold() not in status_list:
+        msg = "enter a valid status"
+        return msg
+    return None
+
+
 def data_now_json_str(schema):
     request_data = request.get_json()
     try:
