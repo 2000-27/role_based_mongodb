@@ -9,7 +9,8 @@ def token_decode():
     try:
         payload = payload.split(" ")[1]
         decoded_jwt = jwt.decode(payload, "secret", algorithms=["HS256"])
-        user = mongo.db.users.find_one({"_id": ObjectId(decoded_jwt['user_id'])})
+        user = mongo.db.users.find_one({"_id": ObjectId(decoded_jwt['user_id'])
+                                        })
         if user is None:
             raise Exception("invalid token")
     except Exception:
@@ -35,10 +36,10 @@ def admin_required(f):
         try:
             decoded_jwt = token_decode()
             user = user_details(decoded_jwt)
-            if user['role'] != 'ADMIN':
+            if user['role'].lower() != 'admin':
                 abort(401)
         except Exception as err:
-            return jsonify({"msg": str(err)})
+            return jsonify({"message": str(err), "success": False}), 403
         return f()
     return decorator
 
@@ -60,6 +61,6 @@ def employee_required(f):
             if user['role'] != 'EMPLOYEE':
                 abort(401)
         except Exception as err:
-            return jsonify({"msg": str(err)})
+            return jsonify({"message": str(err), "success": False}), 403
         return f()
     return decorator

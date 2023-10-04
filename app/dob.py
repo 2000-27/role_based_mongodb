@@ -6,37 +6,37 @@ from flask_bcrypt import generate_password_hash
 
 def add_user(user):
     if user_exist(user['email']):
-        msg = "this email is already register"
-        return msg
+        message = "This email is already register"
+        return message
     if user['confirm_password'] != user['password']:
-        msg = "Password and confirm password should be same"
-        return msg
+        message = "Password and confirm password should be same"
+        return message
     is_user_name_valid = user_check(user['user_name'])
     if is_user_name_valid is False:
-        msg = "Please enter a valid username"
-        return msg
-    if role_valid(user['role'].upper()):
-        msg = "pls enter a valid role"
-        return msg
+        message = "Please enter a valid username"
+        return message
+    if role_valid(user['role']):
+        message = "Please enter a valid role"
+        return message
     hash_password = generate_password_hash(user['password'])
     mongo.db.users.insert_one({
                 "email": user['email'],
                 "password": hash_password,
-                "username": user['user_name'].upper(),
-                "role": user['role'].upper(),
+                "username": user['user_name'],
+                "role": user['role'],
                 }).inserted_id
-    msg = "successfully register"
-    return msg
+    message = True
+    return message
 
 
 def user_task(task, assign_by):
     if not user_exist(task['email']):
-        msg = "user does not exist"
-        return msg
+        message = "user does not exist"
+        return message
     user = mongo.db.users.find_one({"email": task['email']})
     if user['role'] == "ADMIN":
-        msg = "admin can assign task to manger and employee only"
-        return msg
+        message = "admin can assign task to manger and employee only"
+        return message
     mongo.db.tasks.insert_one({
                  "user_id": user['_id'],
                  "assigned_by": assign_by,
@@ -45,35 +45,34 @@ def user_task(task, assign_by):
                  "status": "todo",
                  "due_date": task['due_date'],
                 }).inserted_id
-    msg = "task is assigned"
-    return msg
+    message = "task is assigned"
+    return message
 
 
 def task_delete(task):
     try:
         if not user_exist(task['email']):
-            msg = "user does not exist"
-            return msg
+            message = "user does not exist"
+            return message
         if not task_exit(task['task_id']):
-            msg = "did't assign any task"
-            return msg      
-    except Exception as err:
-        print("error",err)
+            message = "did't assign any task"
+            return message
+    except Exception:
         return Exception("invalid object id")
 
     mongo.db.tasks.delete_one({
         "_id": ObjectId(task['task_id'])
     })
-    msg = "task is delete"
-    return msg
+    message = "task is delete"
+    return message
 
 
 def update(task):
     keysList = list(task.keys())
     if 'status' in keysList:
-        msg = check_status(task)
-        if msg is not None:
-            return msg
+        message = check_status(task)
+        if message is not None:
+            return message
     filter = {'_id': ObjectId(task['task_id'])}
     keysList = list(task.keys())
     for field in keysList:
@@ -81,5 +80,5 @@ def update(task):
             data = {field: task[field]}
             update_field = {"$set": data}
             mongo.db.tasks.update_one(filter, update_field)
-    msg = "task is update"
-    return msg
+    message = "task is update"
+    return message

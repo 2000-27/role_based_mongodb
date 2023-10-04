@@ -33,7 +33,7 @@ def task_exit(task_id):
     try:
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
     except Exception:
-        return Exception("invalid object id")
+        return Exception("invalid object id"), 403
     if task is None:
         return False
     else:
@@ -41,7 +41,7 @@ def task_exit(task_id):
 
 
 def role_valid(role):
-    rolelist = ['ADMIN', 'MANAGER', 'EMPLOYEE']
+    rolelist = ['admin', 'manager', 'employee']
     if role in rolelist:
         return False
     else:
@@ -49,8 +49,8 @@ def role_valid(role):
 
 
 def check_status(task):
-    status_list = ["todo", "in-progress", "under-review", "done"]  
-    if task['status'].casefold() not in status_list:
+    status_list = ["todo", "in-progress", "under-review", "done"]
+    if task['status'].lower() not in status_list:
         msg = "enter a valid status"
         return msg
     return None

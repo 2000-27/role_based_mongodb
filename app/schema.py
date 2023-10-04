@@ -14,6 +14,7 @@ class LoginSchema(EmployeeSchema):
 class UserSchema(LoginSchema, EmployeeSchema):
     confirm_password = fields.String(required=True)
     role = fields.String(required=True)
+    user_name = fields.String(required=True)
 
 
 class TaskSchema(EmployeeSchema):
@@ -25,7 +26,7 @@ class TaskSchema(EmployeeSchema):
 class InfoSchema(EmployeeSchema):
     task_id = fields.String(required=True)
     user_name = fields.String(required=False)
-   
+
 
 class UpdateSchema(Schema):
     task_id = fields.String(required=True)

@@ -13,7 +13,7 @@ def create_user():
     userschema = UserSchema()
     user = data_now_json_str(userschema)
     msg = add_user(user)
-    return jsonify({"msg": msg})
+    return jsonify({"message": msg})
 
 
 @manager_bp.route('/create-task', endpoint='create_task', methods=['POST'])
@@ -23,7 +23,7 @@ def create_task():
     task_schema = TaskSchema()
     task = data_now_json_str(task_schema)
     msg = user_task(task, "MANAGER")
-    return jsonify({"msg": msg})
+    return jsonify({"message": msg})
 
 
 @manager_bp.route('/delete-task', endpoint='delete-task', methods=['DELETE'])
@@ -32,10 +32,9 @@ def delete_task():
     msg = ""
     info_schema = InfoSchema()
     task = data_now_json_str(info_schema)
-    print("task is ",task)
-    #msg = task_delete(task)
-    
-    return jsonify({"msg": msg})
+    print("task is ", task)
+    msg = task_delete(task)
+    return jsonify({"message": msg})
 
 
 @manager_bp.route('/update-task', endpoint='update_task', methods=['POST'])
@@ -45,4 +44,4 @@ def update_task():
     info_schema = InfoSchema()
     task = data_now_json_str(info_schema)
     msg = update(task)
-    return jsonify({"msg": msg})
+    return jsonify({"message": msg})

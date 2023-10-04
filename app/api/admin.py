@@ -10,56 +10,58 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @admin_bp.route('/create-user', endpoint='create_user', methods=['POST'])
 @admin_required
 def create_user():
-    msg = ""
+    message = ""
     user_schema = UserSchema()
     try:
         user = data_now_json_str(user_schema)
     except Exception as err:
-        return jsonify({"missing": str(err)})
+        return jsonify({"missing": str(err)}), 403
 
-    if user['role'].upper() != "ADMIN":
-        msg = add_user(user)
-        return jsonify({"msg": msg})
-
-    msg = "admin can add only EMPLOYEE AND MANAGER"
-    return jsonify({"msg": msg})
+    if user['role'].casefold() != "ADMIN":
+        message = add_user(user)
+        if message is True:
+            return jsonify({"success": True, "message": "Register sucessfully"
+                            }), 200
+        return jsonify({"success": True, "message": message}), 403
+    message = "Admin can add only EMPLOYEE AND MANAGER"
+    return jsonify({"status": False, "message": message}), 403
 
 
 @admin_bp.route('/create-task', endpoint='create_task', methods=['POST'])
 @admin_required
 def create_task():
-    msg = ""
+    message = ""
     task_schema = TaskSchema()
     try:
         user = data_now_json_str(task_schema)
-        msg = user_task(user, "ADMIN")
+        message = user_task(user, "ADMIN")
     except Exception as err:
-        return jsonify({"missing": str(err)})
-    return jsonify({"msg": msg})
+        return jsonify({"success": False, "missing": str(err)}), 401
+
+    return jsonify({"success": True, "message": message}), 200
 
 
 @admin_bp.route('/delete-task', endpoint='delete-task', methods=['DELETE'])
 @admin_required
 def delete_task():
-    msg = ""
+    message = ""
     info_schema = InfoSchema()
     try:
         task = data_now_json_str(info_schema)
-        msg = task_delete(task)
+        message = task_delete(task)
     except Exception as err:
-        return jsonify({"err": str(err)})
-
-    return jsonify({"msg": msg})
+        return jsonify({"err": str(err)}), 403
+    return jsonify({"message": message})
 
 
 @admin_bp.route('/update-task', endpoint='update-task', methods=['PATCH'])
 @admin_required
 def update_task():
-    msg = ""
+    message = ""
     update_schema = UpdateSchema()
     try:
         task = data_now_json_str(update_schema)
-        msg = update(task)
+        message = update(task)
     except Exception as err:
-        return jsonify({"err": str(err)})
-    return jsonify({"msg": msg})
+        return jsonify({"err": str(err)}), 403
+    return jsonify({"message": message})

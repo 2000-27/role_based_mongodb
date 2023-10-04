@@ -2,29 +2,31 @@ from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from json import dumps, loads
 from app import mongo
+import datetime
 from app.config import algor
 from flask_bcrypt import check_password_hash
 from app.schema import UserSchema, LoginSchema
 from app.dob import add_user
 import jwt
-
 auth = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @auth.route('/register', methods=['POST'])
 def register():
-    msg = ""
+    message = ""
     request_data = request.get_json()
     user_schema = UserSchema()
     try:
         result = user_schema.load(request_data)
     except ValidationError as err:
         return jsonify(err.messages), 400
-
     data_now_json_str = dumps(result)
     user = loads(data_now_json_str)
-    msg = add_user(user)
-    return jsonify({"msg": msg})
+    message = add_user(user)
+    if message is True:
+        return jsonify({"status": True,
+                        "message": "Register sucessfully"}), 200
+    return jsonify({"status": False, "message": message}), 403
 
 
 @auth.route('/login', methods=['POST'])
@@ -39,17 +41,18 @@ def login():
     data = loads(data_now_json_str)
     user_email = data['email']
     if mongo.db.users.find_one({"email": user_email}) is None:
-        return jsonify({'msg': "there is no user ,please signup"})
-    
+        return jsonify({"success": False,
+                        'message': "There is no user, Please signup"}), 404
     user = mongo.db.users.find_one({"email": data['email']})
-   
     if check_password_hash(user['password'], data['password']):
         user_id = user['_id']
-        encoded_jwt = jwt.encode({"user_id": str(user_id)},
-                             "secret", algorithm=algor)
-        return jsonify(message="Login successfully", access_token=encoded_jwt)
-    
-    else:
-        return jsonify({'msg': "enter the correct password"})
+        payload = {"user_id": str(user_id), "user_role": str(user['role']),
+                   "exp": datetime.datetime.utcnow() +
+                   datetime.timedelta(minutes=30)}
+        encoded_jwt = jwt.encode(payload, "secret", algorithm=algor)
+        details = {"access token": encoded_jwt, "user_id": user['_id']}
+        return jsonify({"success": True, "message": "Login successfully",
+                        "details": str(details)}), 200
 
-
+    return jsonify({"sucess": False, 'message':
+                    "enter the correct password"}), 404
