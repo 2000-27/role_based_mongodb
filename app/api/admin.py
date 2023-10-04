@@ -11,9 +11,17 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @admin_required
 def create_user():
     msg = ""
-    userschema = UserSchema()
-    user = data_now_json_str(userschema)
-    msg = add_user(user)
+    user_schema = UserSchema()
+    try:
+        user = data_now_json_str(user_schema)
+    except Exception as err:
+        return jsonify({"missing": str(err)})
+
+    if user['role'].upper() != "ADMIN":
+        msg = add_user(user)
+        return jsonify({"msg": msg})
+
+    msg = "admin can add only EMPLOYEE AND MANAGER"
     return jsonify({"msg": msg})
 
 
@@ -22,8 +30,11 @@ def create_user():
 def create_task():
     msg = ""
     task_schema = TaskSchema()
-    user = data_now_json_str(task_schema)
-    msg = user_task(user, "ADMIN")
+    try:
+        user = data_now_json_str(task_schema)
+        msg = user_task(user, "ADMIN")
+    except Exception as err:
+        return jsonify({"missing": str(err)})
     return jsonify({"msg": msg})
 
 
@@ -32,8 +43,12 @@ def create_task():
 def delete_task():
     msg = ""
     info_schema = InfoSchema()
-    task = data_now_json_str(info_schema)
-    msg = task_delete(task)
+    try:
+        task = data_now_json_str(info_schema)
+        msg = task_delete(task)
+    except Exception as err:
+        return jsonify({"err": str(err)})
+
     return jsonify({"msg": msg})
 
 
@@ -42,6 +57,9 @@ def delete_task():
 def update_task():
     msg = ""
     update_schema = UpdateSchema()
-    task = data_now_json_str(update_schema)
-    msg = update(task)
+    try:
+        task = data_now_json_str(update_schema)
+        msg = update(task)
+    except Exception as err:
+        return jsonify({"err": str(err)})
     return jsonify({"msg": msg})

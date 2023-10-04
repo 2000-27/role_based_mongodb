@@ -21,8 +21,8 @@ def create_user():
 def create_task():
     msg = ""
     task_schema = TaskSchema()
-    user = data_now_json_str(task_schema)
-    msg = user_task(user, "MANAGER")
+    task = data_now_json_str(task_schema)
+    msg = user_task(task, "MANAGER")
     return jsonify({"msg": msg})
 
 
@@ -32,7 +32,9 @@ def delete_task():
     msg = ""
     info_schema = InfoSchema()
     task = data_now_json_str(info_schema)
-    msg = task_delete(task)
+    print("task is ",task)
+    #msg = task_delete(task)
+    
     return jsonify({"msg": msg})
 
 

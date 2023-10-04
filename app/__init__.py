@@ -39,4 +39,5 @@ def create_app(test_config=None):
     app.register_blueprint(employee_bp, url_prefix='/employee')
     return app 
 
+
 create_app()
