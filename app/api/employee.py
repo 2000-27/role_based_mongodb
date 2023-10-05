@@ -16,15 +16,14 @@ def view_task():
     if task_id != "N/A":
         try:
             task = mongo.db.tasks.find_one({'_id': ObjectId(task_id)})
-            print("ttt", task)
         except Exception:
             message = "Invalid object id "
-            return jsonify({"message": message})
+            return jsonify({"success": False, "message": message})
 
         if task is None:
             message = "no task is assign to him"         
-            return jsonify({"message": message})
-        return jsonify({"message": str(task)})
+            return jsonify({"success": False, "message": message})
+        return jsonify({"success": True, "message": str(task)})
     return jsonify({"message": "task id is required"})
 
 
@@ -38,5 +37,5 @@ def change_status():
         task = data_now_json_str(status_schema)
         message = update(task)
     except Exception as err:
-        return jsonify({"err": str(err)})
-    return jsonify({"message": message})
+        return jsonify({"success": False, "message": str(err)})
+    return jsonify({"success": True, "message": message})
