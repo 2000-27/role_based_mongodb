@@ -3,6 +3,7 @@ from marshmallow import ValidationError
 from json import dumps, loads
 from app import mongo
 import datetime
+import json
 from app.config import algor
 from flask_bcrypt import check_password_hash
 from app.schema import UserSchema, LoginSchema
@@ -37,10 +38,10 @@ def login():
         result = login_schema.load(request_data)
     except ValidationError as err:
         return jsonify({"success": False, "message": str(err)}), 400
-    
+
     data_now_json_str = dumps(result)
     data = loads(data_now_json_str)
-    user_email = data['email']
+
     user = mongo.db.users.find_one({"email": data['email']})
     if user is None:
         return jsonify({"success": False,
@@ -54,7 +55,6 @@ def login():
         encoded_jwt = jwt.encode(payload, "secret", algorithm=algor)
         details = {"access token": encoded_jwt, "user_id": user['_id']}
         return jsonify({"success": True, "message": "Login successfully",
-                        "details": str(details)}), 200
-
+                       "details": json.dumps(details)}), 200
     return jsonify({"success": False, 'message':
                     "Enter the correct password"}), 403

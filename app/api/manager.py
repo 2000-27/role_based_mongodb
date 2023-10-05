@@ -38,7 +38,8 @@ def view_task():
     if task_id is None:
         all_task = list(mongo.db.tasks.find({'assigned_by': user_id}))
         if all_task is None:
-            return jsonify({"success": False, "message": "No task is assign"}), 403
+            return jsonify({"success": False, "message":
+                            "No task is assign"}), 403
         return jsonify({"success": True, "message": str(all_task)}), 200
 
     try:
@@ -48,7 +49,6 @@ def view_task():
         return jsonify({"success": False, "message": ""})
     except Exception:
         return jsonify({"success": False, "message": "invalid task id"}), 403
-
 
 
 @manager_bp.route('/create-task', endpoint='create_task', methods=['POST'])
@@ -74,12 +74,13 @@ def delete_task():
     try:
         task = data_now_json_str(info_schema)
         token = token_decode()
-        task_details = mongo.db.tasks.find_one({"_id":ObjectId(task['task_id'])})
+        task_details = mongo.db.tasks.find_one({"_id":
+                                                ObjectId(task['task_id'])})
         if token['user_id']==task_details['assigned_by']:
             message = task_delete(task)
-                
             if message is True:
-                return jsonify({"success": True, "message": "task is deleted"}), 200
+                return jsonify({"success": True, "message":
+                                "task is deleted"}), 200
             return jsonify({"success": False, "message": message}), 403
         return jsonify({"success": False, "message": "permission denied"}), 401
     except Exception as err:
@@ -94,10 +95,10 @@ def update_task():
     try:
         task = data_now_json_str(update_schema)
         token = token_decode()
-        task_details = mongo.db.tasks.find_one({"_id": ObjectId(task['task_id'])})
+        task_details = mongo.db.tasks.find_one({"_id":
+                                                ObjectId(task['task_id'])})
         if token['user_id'] == task_details['assigned_by']:
             message = update(task)
-         
             if message is True:
                 return jsonify({"success": True, "message": "task is updated"}), 200
             return jsonify({"success": False, "message": message}), 403

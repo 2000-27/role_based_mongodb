@@ -51,9 +51,9 @@ def delete_task():
     try:
         task = data_now_json_str(info_schema)
         message = task_delete(task)
-        
         if message is True:
-            return jsonify({"success": True, "message": "task is deleted"}), 200
+            return jsonify({"success": True, "message":
+                            "task is deleted"}), 200
         return jsonify({"success": False, "message": message}), 403
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
@@ -68,7 +68,8 @@ def update_task():
         task = data_now_json_str(update_schema)
         message = update(task)
         if message is True:
-            return jsonify({"success": True, "message": "task is updated "}), 200
+            return jsonify({"success": True, "message":
+                            "task is updated "}), 200
         return jsonify({"success": False, "message": message}), 403
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400

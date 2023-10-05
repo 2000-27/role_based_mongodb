@@ -1,4 +1,5 @@
-from .util import user_check, user_exist, task_id_is_valid, role_valid, check_status
+from .util import (user_check, user_exist,
+                   task_id_is_valid, role_valid, check_status)
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash

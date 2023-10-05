@@ -18,13 +18,13 @@ def view_task():
             task = mongo.db.tasks.find_one({'_id': ObjectId(task_id)})
         except Exception:
             message = "Invalid object id "
-            return jsonify({"success": False, "message": message})
+            return jsonify({"success": False, "message": message}), 403
 
         if task is None:
             message = "no task is assign to him"         
-            return jsonify({"success": False, "message": message})
-        return jsonify({"success": True, "message": str(task)})
-    return jsonify({"message": "task id is required"})
+            return jsonify({"success": False, "message": message}), 403
+        return jsonify({"success": True, "message": str(task)}), 200
+    return jsonify({"success": False, "message": "task id is required"}), 403
 
 
 @employee_bp.route('/status-change', endpoint='change_status',
@@ -35,7 +35,10 @@ def change_status():
     status_schema = StatusSchema()
     try:
         task = data_now_json_str(status_schema)
+
         message = update(task)
+        if message is True:
+            return jsonify({"success": True, "message": "stutus is updated"}), 200
+        return jsonify({"success": False, "message": message}), 403
     except Exception as err:
-        return jsonify({"success": False, "message": str(err)})
-    return jsonify({"success": True, "message": message})
+        return jsonify({"success": False, "message": str(err)}), 403

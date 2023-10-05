@@ -5,8 +5,8 @@ from bson.objectid import ObjectId
 
 
 def token_decode():
-    payload = request.headers["Authorization"]
     try:
+        payload = request.headers["Authorization"]
         payload = payload.split(" ")[1]
         decoded_jwt = jwt.decode(payload, "secret", algorithms=["HS256"])
         user = mongo.db.users.find_one({"_id": ObjectId(decoded_jwt['user_id'])
@@ -14,7 +14,7 @@ def token_decode():
         if user is None:
             raise Exception("invalid token")
     except Exception:
-        raise Exception("invalid token")
+        raise Exception("Please enter a valid token")
     return decoded_jwt
 
 
@@ -29,10 +29,10 @@ def admin_required(f):
     def decorator():
         try:
             decoded_jwt = token_decode()
-            print(decoded_jwt)
+            
             user = user_details(decoded_jwt)
             if user['role'].lower() != 'admin':
-                abort(401)
+                return jsonify({"message": "401 Unauthorized", "success": False}), 401
         except Exception as err:
             return jsonify({"message": str(err), "success": False}), 403
         return f()
@@ -45,7 +45,7 @@ def manager_required(f):
             decoded_jwt = token_decode()
             user = user_details(decoded_jwt)
             if user['role'].lower() != 'manager':
-                abort(401)
+                return jsonify({"message": "401 Unauthorized", "success": False}), 401
         except Exception as err:
             return jsonify({"message": str(err), "success": False}), 403
         return f()
@@ -58,7 +58,7 @@ def employee_required(f):
             decoded_jwt = token_decode()
             user = user_details(decoded_jwt)
             if user['role'] != 'employee':
-                abort(401)
+                return jsonify({"message": "401 Unauthorized", "success": False}), 401
         except Exception as err:
             return jsonify({"message": str(err), "success": False}), 403
         return f()
