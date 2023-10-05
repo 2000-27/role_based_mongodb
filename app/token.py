@@ -57,7 +57,7 @@ def employee_required(f):
         try:
             decoded_jwt = token_decode()
             user = user_details(decoded_jwt)
-            if user['role'] != 'EMPLOYEE':
+            if user['role'] != 'employee':
                 abort(401)
         except Exception as err:
             return jsonify({"message": str(err), "success": False}), 403
