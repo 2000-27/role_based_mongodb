@@ -25,16 +25,11 @@ def user_details(decoded_jwt):
     return user
 
 
-def valid_token():
-    payload = request.headers["Authorization"]
-    token_decode(payload)
-#    return "user"
-
-
 def admin_required(f):
     def decorator():
         try:
             decoded_jwt = token_decode()
+            print(decoded_jwt)
             user = user_details(decoded_jwt)
             if user['role'].lower() != 'admin':
                 abort(401)
@@ -46,9 +41,13 @@ def admin_required(f):
 
 def manager_required(f):
     def decorator():
-        user = valid_token()
-        if user['role'] != "MANAGER":
-            abort(401)
+        try:
+            decoded_jwt = token_decode()
+            user = user_details(decoded_jwt)
+            if user['role'].lower() != 'manager':
+                abort(401)
+        except Exception as err:
+            return jsonify({"message": str(err), "success": False}), 403
         return f()
     return decorator
 

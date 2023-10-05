@@ -25,7 +25,7 @@ def view_task():
     try:
         task = mongo.db.tasks.find_one({'_id': ObjectId(employee_detail['task_id'])})
     except Exception:
-        message = "invalid object id "
+        message = "Invalid object id "
         return jsonify({"message": message})
 
     if task is None:

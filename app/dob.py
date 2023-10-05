@@ -1,4 +1,4 @@
-from .util import user_check, user_exist, task_exit, role_valid, check_status
+from .util import user_check, user_exist, task_id_is_valid, role_valid, check_status
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
@@ -45,25 +45,24 @@ def user_task(task, assign_by):
                  "status": "todo",
                  "due_date": task['due_date'],
                 }).inserted_id
-    message = "task is assigned"
+    message = True
     return message
 
 
 def task_delete(task):
-    try:
-        if not user_exist(task['email']):
-            message = "user does not exist"
-            return message
-        if not task_exit(task['task_id']):
-            message = "did't assign any task"
-            return message
-    except Exception:
-        return Exception("invalid object id")
+    print("fgdfg",task_id_is_valid(task['task_id']))
+    if task_id_is_valid(task['task_id']) is None:
+        message = "There is no task"
+        return message
+   
+    if task_id_is_valid(task['task_id']):
+        mongo.db.tasks.delete_one({
+            "_id": ObjectId(task['task_id'])
+        })
+        message = True
+        return message
 
-    mongo.db.tasks.delete_one({
-        "_id": ObjectId(task['task_id'])
-    })
-    message = "task is delete"
+    message = "Invalid objectId"
     return message
 
 
@@ -73,12 +72,19 @@ def update(task):
         message = check_status(task)
         if message is not None:
             return message
-    filter = {'_id': ObjectId(task['task_id'])}
-    keysList = list(task.keys())
-    for field in keysList:
-        if field != "task_id":
-            data = {field: task[field]}
-            update_field = {"$set": data}
-            mongo.db.tasks.update_one(filter, update_field)
-    message = "task is update"
+    if task_id_is_valid(task['task_id']) is None:
+        message = "There is no task"
+        return message
+    if task_id_is_valid(task['task_id']):
+        filter = {'_id': ObjectId(task['task_id'])}
+        keysList = list(task.keys())
+        for field in keysList:
+            if field != "task_id":
+                data = {field: task[field]}
+                update_field = {"$set": data}
+                mongo.db.tasks.update_one(filter, update_field)
+        message = True
+        return message
+
+    message = "Invalid objectId"
     return message

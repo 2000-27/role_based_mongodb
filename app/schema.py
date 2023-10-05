@@ -26,6 +26,7 @@ class TaskSchema(EmployeeSchema):
 class InfoSchema(EmployeeSchema):
     task_id = fields.String(required=True)
     user_name = fields.String(required=False)
+    email = fields.String(required=False)
 
 
 class UpdateSchema(Schema):

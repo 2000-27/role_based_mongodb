@@ -32,12 +32,23 @@ def task_check(email):
 def task_exit(task_id):
     try:
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+
     except Exception:
         return Exception("invalid object id"), 403
     if task is None:
         return False
     else:
         return True
+
+
+def task_id_is_valid(task_id):
+    try:
+        task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+        if task is None:
+            return None
+        return True
+    except Exception:
+        return False
 
 
 def role_valid(role):
