@@ -19,7 +19,7 @@ def register():
     try:
         result = user_schema.load(request_data)
     except ValidationError as err:
-        return jsonify(err.messages), 400
+        return jsonify({"success": False, "message": str(err)}), 400
     data_now_json_str = dumps(result)
     user = loads(data_now_json_str)
     message = add_user(user)
@@ -36,14 +36,16 @@ def login():
     try:
         result = login_schema.load(request_data)
     except ValidationError as err:
-        return jsonify(err.messages), 400
+        return jsonify({"success": False, "message": str(err)}), 400
+    
     data_now_json_str = dumps(result)
     data = loads(data_now_json_str)
     user_email = data['email']
-    if mongo.db.users.find_one({"email": user_email}) is None:
+    user = mongo.db.users.find_one({"email": data['email']})
+    if user is None:
         return jsonify({"success": False,
                         'message': "There is no user, Please signup"}), 403
-    user = mongo.db.users.find_one({"email": data['email']})
+
     if check_password_hash(user['password'], data['password']):
         user_id = user['_id']
         payload = {"user_id": str(user_id), "user_role": str(user['role']),

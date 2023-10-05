@@ -15,7 +15,7 @@ def create_user():
     try:
         user = data_now_json_str(user_schema)
     except Exception as err:
-        return jsonify(err.messages), 400
+        return jsonify({"success": False, "message": str(err)}), 400
 
     if user['role'] != "admin":
         message = add_user(user)
@@ -24,7 +24,7 @@ def create_user():
                             }), 200
         return jsonify({"success": True, "message": message}), 403
     message = "Admin can add only EMPLOYEE AND MANAGER"
-    return jsonify({"status": False, "message": message}), 403
+    return jsonify({"success": False, "message": message}), 403
 
 
 @admin_bp.route('/create-task', endpoint='create_task', methods=['POST'])
@@ -56,8 +56,7 @@ def delete_task():
             return jsonify({"success": True, "message": "task is deleted"}), 200
         return jsonify({"success": False, "message": message}), 403
     except Exception as err:
-        return jsonify(str(err)), 403
-    
+        return jsonify({"success": False, "message": str(err)}), 400
 
 
 @admin_bp.route('/update-task', endpoint='update-task', methods=['PATCH'])
@@ -69,8 +68,7 @@ def update_task():
         task = data_now_json_str(update_schema)
         message = update(task)
         if message is True:
-            return jsonify({"success": True, "message": "task is updated"}), 200
+            return jsonify({"success": True, "message": "task is updated "}), 200
         return jsonify({"success": False, "message": message}), 403
     except Exception as err:
-        return jsonify(str(err)), 403
-    
+        return jsonify({"success": False, "message": str(err)}), 400

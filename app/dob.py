@@ -2,6 +2,7 @@ from .util import user_check, user_exist, task_id_is_valid, role_valid, check_st
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
+from app.token import token_decode
 
 
 def add_user(user):
@@ -37,9 +38,10 @@ def user_task(task, assign_by):
     if user['role'] == "ADMIN":
         message = "admin can assign task to manger and employee only"
         return message
+    decoded_jwt = token_decode()
     mongo.db.tasks.insert_one({
                  "user_id": user['_id'],
-                 "assigned_by": assign_by,
+                 "assigned_by": decoded_jwt['user_id'],
                  "email": task['email'],
                  "task_description": task['description'],
                  "status": "todo",
@@ -50,7 +52,7 @@ def user_task(task, assign_by):
 
 
 def task_delete(task):
-    print("fgdfg",task_id_is_valid(task['task_id']))
+
     if task_id_is_valid(task['task_id']) is None:
         message = "There is no task"
         return message
