@@ -1,31 +1,88 @@
 from . import mongo
 import re
-def email_check(email):
-    if not re.match(r'[^@]+@[^@]+\.[^@]+',email):  
-           return False
-    else :
-          return True
-        
-    
+from flask import request
+from json import dumps, loads
+from marshmallow import ValidationError
+from bson.objectid import ObjectId
+
+
 def user_check(username):
-        if not (re.match(r'[a-zA-Z0-9\s]+$',username)): 
-            return False
-        else :
-          return True    
- 
-def is_email_exit(email):
-    
-     print("your email is",email)
-     is_email_exit=mongo.db.users.find_one({"email":email})
-     print("your email is exit in record is ",is_email_exit) 
-     if is_email_exit != None :
-         return True
-     else :
-         return False  
+    if not (re.match(r'[a-zA-Z0-9\s]+$', username)):
+        return False
+    else:
+        return True
 
-  
 
-def role_check(user_role):
-     role_is=mongo.db.role.find_one({"role_name":user_role})
-     print("jdlkfjsdlkfjsl",role_is['role_name'])
-     print("your role is ss  ",role_is)  
+def user_exist(email):
+    user = mongo.db.users.find_one({"email": email})
+    if user is None:
+        return False
+    else:
+        return True
+
+
+def task_check(email):
+    task = mongo.db.tasks.find_one({"email": email})
+    if task is None:
+        return False
+    else:
+        return True
+
+
+def task_exit(task_id):
+    try:
+        task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+
+    except Exception:
+        return Exception("invalid object id"), 403
+    if task is None:
+        return False
+    else:
+        return True
+
+
+def task_id_is_valid(task_id):
+    try:
+        task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+        if task is None:
+            return None
+        return True
+    except Exception:
+        return False
+
+
+def role_valid(role):
+    rolelist = ['admin', 'manager', 'employee']
+    if role in rolelist:
+        return False
+    else:
+        return True
+
+
+def check_status(task):
+    status_list = ["todo", "in-progress", "under-review", "done"]
+    if task['status'].lower() not in status_list:
+        msg = "enter a valid status"
+        return msg
+    return None
+
+
+def data_now_json_str(schema):
+    request_data = request.get_json()
+    try:
+        result = schema.load(request_data)
+    except ValidationError as err:
+        raise err
+    data_now_json_str = dumps(result)
+    data = loads(data_now_json_str)
+    return data
+
+
+def serialize_doc(doc):
+    doc["_id"] = str(doc["_id"])
+    return doc
+
+
+def serialize_list(list):
+    new_list = [serialize_doc(dictn) for dictn in list]
+    return new_list

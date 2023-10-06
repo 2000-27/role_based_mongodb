@@ -1,3 +1,3 @@
 from .auth import *
-from .user import *
+from .manager import *
 from .admin import *

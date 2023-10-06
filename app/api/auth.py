@@ -1,49 +1,59 @@
-from flask import Blueprint, request ,jsonify , current_app
-from app import db ,mongo 
-from datetime import datetime,timedelta
-from  app.dob import insert_data 
-import jwt 
-
+from flask import Blueprint, request, jsonify
+from marshmallow import ValidationError
+from json import dumps, loads
+from app import mongo
+import datetime
+from app.config import algor
+from flask_bcrypt import check_password_hash
+from app.schema import UserSchema, LoginSchema
+from app.dob import add_user
+import jwt
 auth = Blueprint('auth', __name__, url_prefix='/auth')
+
+
 @auth.route('/register', methods=['POST'])
 def register():
-            msg=""
-            json_body = request.get_json() 
-            user_name =json_body['user_name']
-            email = json_body['email']
-            password = json_body['password']
-            confirm_password = json_body['confirmpwd']
-            role_name=json_body['role_name']
-            msg=insert_data(user_name,password,confirm_password,email,role_name)  
-           
-            if msg!="":
-              return jsonify({"msg":msg})      
-            else:   
-                id = mongo.db.users.insert_one({   #users is my table name
-                    "email": email,
-                    "password":password,
-                    "username": user_name,
-                    "role_name":role_name,
-                    }).inserted_id
-                msg="successfully register"
-                return jsonify({"msg":msg})
-
+    message = ""
+    request_data = request.get_json()
+    user_schema = UserSchema()
+    try:
+        result = user_schema.load(request_data)
+    except ValidationError as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+    data_now_json_str = dumps(result)
+    user = loads(data_now_json_str)
+    message = add_user(user)
+    if message is True:
+        return jsonify({"success": True,
+                        "message": "Register sucessfully"}), 200
+    return jsonify({"success": False, "message": message}), 400
 
 
 @auth.route('/login', methods=['POST'])
 def login():
-          try :  
-            json_body = request.get_json() 
-            user_name =json_body['user_name']
-            email = json_body['email']
-            password = json_body['password']
-            is_user_exit=mongo.db.users.find_one({"email":email})
-            if is_user_exit is None:
-               return jsonify({'msg':"Signup Please"})                
-            else:  
-              encoded_jwt = jwt.encode({"email": email}, "secret", algorithm="HS256")
-              return jsonify(message="Login successfully" , access_token=encoded_jwt)
-          except Exception as err:
-              print("your errrorr is ",err)
-               
-              return jsonify("therer is error")
+    request_data = request.get_json()
+    login_schema = LoginSchema()
+    try:
+        result = login_schema.load(request_data)
+    except ValidationError as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    data_now_json_str = dumps(result)
+    data = loads(data_now_json_str)
+
+    user = mongo.db.users.find_one({"email": data['email']})
+    if user is None:
+        return jsonify({"success": False,
+                        'message': "There is no user, Please signup"}), 400
+
+    if check_password_hash(user['password'], data['password']):
+        user_id = user['_id']
+        payload = {"user_id": str(user_id), "user_role": str(user['role']),
+                   "exp": datetime.datetime.utcnow() +
+                   datetime.timedelta(hours=2)}
+        encoded_jwt = jwt.encode(payload, "secret", algorithm=algor)
+        details = {"access token": str(encoded_jwt), "user_id": str(user['_id'])}
+        return jsonify({"success": True, "message": "Login successfully",
+                       "details": details}), 200
+    return jsonify({"success": False, 'message':
+                    "Enter the correct password"}), 400
