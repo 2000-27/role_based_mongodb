@@ -22,9 +22,9 @@ def create_user():
         if message is True:
             return jsonify({"success": True, "message": "Register sucessfully"
                             }), 200
-        return jsonify({"success": True, "message": message}), 403
+        return jsonify({"success": True, "message": message}), 400
     message = "Admin can add only EMPLOYEE AND MANAGER"
-    return jsonify({"success": False, "message": message}), 403
+    return jsonify({"success": False, "message": message}), 400
 
 
 @admin_bp.route('/create-task', endpoint='create_task', methods=['POST'])
@@ -40,7 +40,7 @@ def create_task():
     if message is True:
         return jsonify({"success": True, "message": "Task is assigned"
                         }), 200
-    return jsonify({"success": False, "message": message}), 403
+    return jsonify({"success": False, "message": message}), 400
 
 
 @admin_bp.route('/delete-task', endpoint='delete-task', methods=['DELETE'])
@@ -54,7 +54,7 @@ def delete_task():
         if message is True:
             return jsonify({"success": True, "message":
                             "task is deleted"}), 200
-        return jsonify({"success": False, "message": message}), 403
+        return jsonify({"success": False, "message": message}), 400
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
@@ -70,6 +70,6 @@ def update_task():
         if message is True:
             return jsonify({"success": True, "message":
                             "task is updated "}), 200
-        return jsonify({"success": False, "message": message}), 403
+        return jsonify({"success": False, "message": message}), 400
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400

@@ -34,7 +34,7 @@ def admin_required(f):
             if user['role'].lower() != 'admin':
                 return jsonify({"message": "401 Unauthorized", "success": False}), 401
         except Exception as err:
-            return jsonify({"message": str(err), "success": False}), 403
+            return jsonify({"message": str(err), "success": False}), 400
         return f()
     return decorator
 
@@ -47,7 +47,7 @@ def manager_required(f):
             if user['role'].lower() != 'manager':
                 return jsonify({"message": "401 Unauthorized", "success": False}), 401
         except Exception as err:
-            return jsonify({"message": str(err), "success": False}), 403
+            return jsonify({"message": str(err), "success": False}), 400
         return f()
     return decorator
 
@@ -60,6 +60,6 @@ def employee_required(f):
             if user['role'] != 'employee':
                 return jsonify({"message": "401 Unauthorized", "success": False}), 401
         except Exception as err:
-            return jsonify({"message": str(err), "success": False}), 403
+            return jsonify({"message": str(err), "success": False}), 400
         return f()
     return decorator

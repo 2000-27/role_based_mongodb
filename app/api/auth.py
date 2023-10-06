@@ -27,7 +27,7 @@ def register():
     if message is True:
         return jsonify({"success": True,
                         "message": "Register sucessfully"}), 200
-    return jsonify({"success": False, "message": message}), 403
+    return jsonify({"success": False, "message": message}), 400
 
 
 @auth.route('/login', methods=['POST'])
@@ -45,7 +45,7 @@ def login():
     user = mongo.db.users.find_one({"email": data['email']})
     if user is None:
         return jsonify({"success": False,
-                        'message': "There is no user, Please signup"}), 403
+                        'message': "There is no user, Please signup"}), 400
 
     if check_password_hash(user['password'], data['password']):
         user_id = user['_id']
@@ -53,8 +53,8 @@ def login():
                    "exp": datetime.datetime.utcnow() +
                    datetime.timedelta(hours=2)}
         encoded_jwt = jwt.encode(payload, "secret", algorithm=algor)
-        details = {"access token": encoded_jwt, "user_id": user['_id']}
+        details = {"access token": str(encoded_jwt), "user_id": str(user['_id'])}
         return jsonify({"success": True, "message": "Login successfully",
-                       "details": json.dumps(details)}), 200
+                       "details": details}), 200
     return jsonify({"success": False, 'message':
-                    "Enter the correct password"}), 403
+                    "Enter the correct password"}), 400

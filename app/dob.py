@@ -40,6 +40,10 @@ def user_task(task, assign_by):
         message = "admin can assign task to manger and employee only"
         return message
     decoded_jwt = token_decode()
+    if ObjectId(decoded_jwt['user_id']) == user['_id']:
+        message = "permission denied"
+        return message
+    
     mongo.db.tasks.insert_one({
                  "user_id": user['_id'],
                  "assigned_by": decoded_jwt['user_id'],
@@ -76,7 +80,7 @@ def update(task):
         if message is not None:
             return message
     if task_id_is_valid(task['task_id']) is None:
-        message = "There is no task"
+        message = "There is no such task"
         return message
     if task_id_is_valid(task['task_id']):
         filter = {'_id': ObjectId(task['task_id'])}
