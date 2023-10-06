@@ -76,3 +76,13 @@ def data_now_json_str(schema):
     data_now_json_str = dumps(result)
     data = loads(data_now_json_str)
     return data
+
+
+def serialize_doc(doc):
+    doc["_id"] = str(doc["_id"])
+    return doc
+
+
+def serialize_list(list):
+    new_list = [serialize_doc(dictn) for dictn in list]
+    return new_list

@@ -3,7 +3,6 @@ from marshmallow import ValidationError
 from json import dumps, loads
 from app import mongo
 import datetime
-import json
 from app.config import algor
 from flask_bcrypt import check_password_hash
 from app.schema import UserSchema, LoginSchema

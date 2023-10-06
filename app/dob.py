@@ -45,7 +45,7 @@ def user_task(task, assign_by):
         return message
     
     mongo.db.tasks.insert_one({
-                 "user_id": user['_id'],
+                 "user_id": str(user['_id']),
                  "assigned_by": decoded_jwt['user_id'],
                  "email": task['email'],
                  "task_description": task['description'],
@@ -59,7 +59,7 @@ def user_task(task, assign_by):
 def task_delete(task):
 
     if task_id_is_valid(task['task_id']) is None:
-        message = "There is no task"
+        message = "Invalid ObjectId"
         return message
    
     if task_id_is_valid(task['task_id']):
@@ -80,7 +80,7 @@ def update(task):
         if message is not None:
             return message
     if task_id_is_valid(task['task_id']) is None:
-        message = "There is no such task"
+        message = "invalid ObjectId"
         return message
     if task_id_is_valid(task['task_id']):
         filter = {'_id': ObjectId(task['task_id'])}
