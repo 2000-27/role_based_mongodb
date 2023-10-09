@@ -4,6 +4,9 @@ from flask import request
 from json import dumps, loads
 from marshmallow import ValidationError
 from bson.objectid import ObjectId
+from flask_mail import Message
+from app.config import sender_email
+from app import mail
 
 
 def user_check(username):
@@ -32,7 +35,7 @@ def task_check(email):
 def task_exit(task_id):
     try:
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
-
+         
     except Exception:
         return Exception("invalid object id"), 403
     if task is None:
@@ -86,3 +89,30 @@ def serialize_doc(doc):
 def serialize_list(list):
     new_list = [serialize_doc(dictn) for dictn in list]
     return new_list
+
+
+def mail_send(task_id, role, status):
+    print("rolee",role,status)
+    task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+   
+    if status == "task_created":
+        user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
+        mail_body = "Hi , "+user['username'].capitalize() + "   your " + role.capitalize() + "  assign you a task  :- "+'"'+task['task_description'] + '"' 
+        recipients_email = task['email']
+    if status == "updated":
+        if role == 'employee':
+            user = mongo.db.users.find_one({"_id": ObjectId(task['assigned_by'])})
+            mail_body = "Hi ," + user['username'].capitalize() + " status of "  + '"' + task['email'] + '"'+ " updated to " + task['status']
+            recipients_email = user['email']  
+            
+        user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
+        mail_body = "Hi ," + user['username'].capitalize() + " status is updated to " + task['status']
+        recipients_email = task['email']
+    msg = Message(
+                         status,
+                         sender=sender_email,
+                         recipients=[recipients_email]
+                                    )
+
+    msg.body = mail_body 
+    mail.send(msg)

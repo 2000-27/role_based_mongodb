@@ -106,7 +106,7 @@ def update_task():
         task_details = mongo.db.tasks.find_one({"_id":
                                                 ObjectId(task['task_id'])})
         if token['user_id'] == task_details['assigned_by']:
-            message = update(task)
+            message = update(task, "manager")
             if message is True:
                 return jsonify({"success": True, "message": "task is updated"}), 200
             return jsonify({"success": False, "message": message}), 400

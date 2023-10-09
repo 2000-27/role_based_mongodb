@@ -4,6 +4,7 @@ from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
 from app.token import token_decode
+from app.util import mail_send
 
 
 def add_user(user):
@@ -43,8 +44,8 @@ def user_task(task, assign_by):
     if ObjectId(decoded_jwt['user_id']) == user['_id']:
         message = "permission denied"
         return message
-    
-    mongo.db.tasks.insert_one({
+
+    task_id = mongo.db.tasks.insert_one({
                  "user_id": str(user['_id']),
                  "assigned_by": decoded_jwt['user_id'],
                  "email": task['email'],
@@ -52,6 +53,7 @@ def user_task(task, assign_by):
                  "status": "todo",
                  "due_date": task['due_date'],
                 }).inserted_id
+    mail_send(task_id, assign_by, "task_created")
     message = True
     return message
 
@@ -73,16 +75,17 @@ def task_delete(task):
     return message
 
 
-def update(task):
+def update(task, updated_by):
     keysList = list(task.keys())
     if 'status' in keysList:
         message = check_status(task)
         if message is not None:
             return message
-    if task_id_is_valid(task['task_id']) is None:
+    task_id_valid = task_id_is_valid(task['task_id'])   
+    if task_id_valid is None:
         message = "invalid ObjectId"
         return message
-    if task_id_is_valid(task['task_id']):
+    if task_id_valid:
         filter = {'_id': ObjectId(task['task_id'])}
         keysList = list(task.keys())
         for field in keysList:
@@ -91,6 +94,7 @@ def update(task):
                 update_field = {"$set": data}
                 mongo.db.tasks.update_one(filter, update_field)
         message = True
+        mail_send(task['task_id'], updated_by, "updated")
         return message
 
     message = "Invalid objectId"
