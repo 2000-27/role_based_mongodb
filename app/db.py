@@ -1,4 +1,5 @@
 from flask_pymongo import PyMongo
+import os
 
 
 def init_db():
@@ -7,5 +8,5 @@ def init_db():
 
 
 def get_db(app, mongo):
-    app.config["MONGO_URI"] = "mongodb://localhost:27017/my_db"
+    app.config["MONGO_URI"] = os.environ.get("MONGO_URI")
     mongo.init_app(app)

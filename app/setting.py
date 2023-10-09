@@ -1,6 +1,6 @@
 from flask_mail import Mail
 from dotenv import load_dotenv
-import os 
+import os
 
 load_dotenv()
 

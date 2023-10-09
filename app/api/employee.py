@@ -50,7 +50,8 @@ def change_status():
         task = data_now_json_str(status_schema)
         message = update(task, "employee")
         if message is True:
-            return jsonify({"success": True, "message": "stutus is updated"}), 200
+            return jsonify({"success": True, "message": "status is updated"}), 200
         return jsonify({"success": False, "message": message}), 400
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
+

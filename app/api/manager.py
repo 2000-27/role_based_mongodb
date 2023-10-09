@@ -4,7 +4,7 @@ from . import mongo
 from app.token import token_decode
 from app.dob import add_user, user_task, task_delete, update
 from app.util import serialize_list, serialize_doc
-from app.util import data_now_json_str
+from app.util import data_now_json_str, calculate_salary
 from app.schema import TaskSchema, UserSchema, InfoSchema, UpdateSchema
 from bson.objectid import ObjectId
 manager_bp = Blueprint("manager", __name__, url_prefix="manager")
@@ -79,7 +79,7 @@ def delete_task():
         task = data_now_json_str(info_schema)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 401
-    
+
     try:
         token = token_decode()
         task_details = mongo.db.tasks.find_one({"_id":
@@ -113,3 +113,26 @@ def update_task():
         return jsonify({"success": False, "message": "Permission denied"}), 401
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
+
+
+@manager_bp.route('/generate-salary', endpoint='assign_salary',
+                  methods=['GET'])
+@manager_required
+def assign_salary():
+    user_id = request.args.get('user_id', default=None)
+    if user_id is not None:
+        try:
+            all_task_list = list(mongo.db.tasks.find({'user_id': user_id}))
+            print("allll ",len(all_task_list))
+            totol_amount =  calculate_salary(all_task_list)
+            if totol_amount != 0:
+                return jsonify({"success": True,
+                                "Your Salary is (in $) ": totol_amount}), 200
+            return jsonify({"success": False,
+                            "message ": "Please complete your all task"}), 200
+            
+        except Exception:
+            message = "Invalid ObjectId"
+            return jsonify({"success": False, "message": message}), 400
+
+    return jsonify({"success": False, "message": "Please Enter a user id " }), 400 

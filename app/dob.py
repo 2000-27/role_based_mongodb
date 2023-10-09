@@ -44,7 +44,7 @@ def user_task(task, assign_by):
     if ObjectId(decoded_jwt['user_id']) == user['_id']:
         message = "permission denied"
         return message
-
+    print("ddfsdf",task)
     task_id = mongo.db.tasks.insert_one({
                  "user_id": str(user['_id']),
                  "assigned_by": decoded_jwt['user_id'],
@@ -52,6 +52,8 @@ def user_task(task, assign_by):
                  "task_description": task['description'],
                  "status": "todo",
                  "due_date": task['due_date'],
+                 "rate": task['rate'],
+                 "time_needed": 0
                 }).inserted_id
     mail_send(task_id, assign_by, "task_created")
     message = True
@@ -76,11 +78,13 @@ def task_delete(task):
 
 
 def update(task, updated_by):
+   
     keysList = list(task.keys())
     if 'status' in keysList:
         message = check_status(task)
         if message is not None:
             return message
+
     task_id_valid = task_id_is_valid(task['task_id'])   
     if task_id_valid is None:
         message = "invalid ObjectId"
@@ -92,6 +96,7 @@ def update(task, updated_by):
             if field != "task_id":
                 data = {field: task[field]}
                 update_field = {"$set": data}
+
                 mongo.db.tasks.update_one(filter, update_field)
         message = True
         mail_send(task['task_id'], updated_by, "updated")

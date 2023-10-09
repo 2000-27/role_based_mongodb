@@ -93,6 +93,7 @@ def serialize_list(list):
 def mail_send(task_id, role, status):
 
     task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+    print("task",task)
 
     if status == "task_created":
         user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
@@ -101,14 +102,15 @@ def mail_send(task_id, role, status):
     if status == "updated":
         if role == 'employee':
             user = mongo.db.users.find_one({"_id": ObjectId(task['assigned_by'])})
-            mail_body = "Hi ," + user['username'].capitalize() + " status of "+'"' + task['email'] + '"'+ " updated to " + task['status']
+            mail_body = "Hi , " + user['username'].capitalize() + " status of " + '"' + task_id + '"' + " updated to " + '"' + task['status'] + '"'
             recipients_email = user['email']
 
         if role == "admin" or role == "manager":
             user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
-            mail_body = "Hi , your " + role.capitalize() + " updated status to " + task['status']
+            mail_body = "The status of your  task-id = " + '"' + task_id + '" ' + " , updated to  " + '"' + task['status'] + '"'
             recipients_email = task['email']
-
+    print("mail", mail_body)
+    print("recipients", recipients_email)
     msg = Message(
                          status,
                          sender=sender_email,
@@ -117,3 +119,17 @@ def mail_send(task_id, role, status):
 
     msg.body = mail_body
     mail.send(msg)
+
+
+def calculate_salary(task_list):
+    create = [None for li in task_list if li['status'] != 'done']
+    print(create)
+    if len(create) == 0:
+
+        total_amount = [li['rate'] * li['time_needed'] for li in task_list]
+        total_salary = sum(total_amount)
+        print("total amou",total_amount)
+        print("total_salary",total_salary)
+        return total_salary
+    
+    return 0
