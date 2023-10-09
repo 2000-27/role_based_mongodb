@@ -105,14 +105,19 @@ def mail_send(task_id, role, status):
             mail_body = "Hi ," + user['username'].capitalize() + " status of "  + '"' + task['email'] + '"'+ " updated to " + task['status']
             recipients_email = user['email']  
             
-        user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
-        mail_body = "Hi ," + user['username'].capitalize() + " status is updated to " + task['status']
-        recipients_email = task['email']
-    msg = Message(
-                         status,
-                         sender=sender_email,
-                         recipients=[recipients_email]
-                                    )
+        if role =="admin" or role =="manager":    
+            user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
+            print('ss',user)
+            mail_body = "Hi , your " + role.capitalize() + " updated status to  " + task['status']
+            recipients_email = task['email']
+        
+    print("mmm",mail_body)
+    print("rr",recipients_email)
+    # msg = Message(
+    #                      status,
+    #                      sender=sender_email,
+    #                      recipients=[recipients_email]
+    #                                 )
 
-    msg.body = mail_body 
-    mail.send(msg)
+    # msg.body = mail_body 
+    # mail.send(msg)

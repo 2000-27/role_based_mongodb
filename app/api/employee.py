@@ -30,14 +30,14 @@ def view_task():
 
     decoded_jwt = token_decode()
     user = mongo.db.users.find_one({'_id': ObjectId(decoded_jwt['user_id'])})
-    all_task = list(mongo.db.tasks.find({'email': user['email']}))
+    all_task_list = list(mongo.db.tasks.find({'email': user['email']}))
 
-    if len(all_task) == 0:
+    if len(all_task_list) == 0:
         return jsonify({"success": False, "message":
                         "No task is assign"}), 400
 
-    alls_task = serialize_list(all_task)
-    return jsonify({"success": True, "details": alls_task}), 200
+    all_task_list = serialize_list(all_task_list)
+    return jsonify({"success": True, "details": all_task_list}), 200
 
 
 @employee_bp.route('/status-change', endpoint='change_status',
@@ -48,7 +48,6 @@ def change_status():
     status_schema = StatusSchema()
     try:
         task = data_now_json_str(status_schema)
-
         message = update(task, "employee")
         if message is True:
             return jsonify({"success": True, "message": "stutus is updated"}), 200

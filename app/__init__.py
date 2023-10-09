@@ -1,10 +1,11 @@
 import os
 from flask import Flask, make_response, jsonify
 from . import db
+from . import setting
 
 
 mongo = db.init_db()
-mail = db.init_mail()
+mail = setting.init_mail()
 
 
 def create_app(test_config=None):
@@ -31,16 +32,17 @@ def create_app(test_config=None):
     def error_500(error):
         return make_response(jsonify(error="internal Server error"), 500)
 
-    db.get_db(mongo=mongo, app=app, mail=mail)
+    db.get_db(mongo=mongo, app=app)
+    setting.get_mail(app=app, mail=mail)
     from app.api.auth import auth
     from app.api.admin import admin_bp
     from app.api.manager import manager_bp
-    from app.api.employee import employee_bp 
+    from app.api.employee import employee_bp
     app.register_blueprint(auth, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(manager_bp, url_prefix='/manager')
     app.register_blueprint(employee_bp, url_prefix='/employee')
-    return app 
+    return app
 
 
-#create_app()
+
