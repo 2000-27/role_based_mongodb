@@ -1,6 +1,12 @@
 
-
-algor = ""
+algorithm = ""
 
 sender_email = ""
 SECRET_KEY = ""
+
+MAIL_SERVER =""
+MAIL_PORT = 
+MAIL_USERNAME = ''
+MAIL_PASSWORD = ''
+MAIL_USE_TLS = 
+

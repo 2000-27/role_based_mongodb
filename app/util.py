@@ -35,7 +35,6 @@ def task_check(email):
 def task_exit(task_id):
     try:
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
-         
     except Exception:
         return Exception("invalid object id"), 403
     if task is None:
@@ -92,9 +91,9 @@ def serialize_list(list):
 
 
 def mail_send(task_id, role, status):
-    print("rolee",role,status)
+
     task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
-   
+
     if status == "task_created":
         user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
         mail_body = "Hi , "+user['username'].capitalize() + "   your " + role.capitalize() + "  assign you a task  :- "+'"'+task['task_description'] + '"' 
@@ -102,22 +101,19 @@ def mail_send(task_id, role, status):
     if status == "updated":
         if role == 'employee':
             user = mongo.db.users.find_one({"_id": ObjectId(task['assigned_by'])})
-            mail_body = "Hi ," + user['username'].capitalize() + " status of "  + '"' + task['email'] + '"'+ " updated to " + task['status']
-            recipients_email = user['email']  
-            
-        if role =="admin" or role =="manager":    
-            user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
-            print('ss',user)
-            mail_body = "Hi , your " + role.capitalize() + " updated status to  " + task['status']
-            recipients_email = task['email']
-        
-    print("mmm",mail_body)
-    print("rr",recipients_email)
-    # msg = Message(
-    #                      status,
-    #                      sender=sender_email,
-    #                      recipients=[recipients_email]
-    #                                 )
+            mail_body = "Hi ," + user['username'].capitalize() + " status of "+'"' + task['email'] + '"'+ " updated to " + task['status']
+            recipients_email = user['email']
 
-    # msg.body = mail_body 
-    # mail.send(msg)
+        if role == "admin" or role == "manager":
+            user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
+            mail_body = "Hi , your " + role.capitalize() + " updated status to " + task['status']
+            recipients_email = task['email']
+
+    msg = Message(
+                         status,
+                         sender=sender_email,
+                         recipients=[recipients_email]
+                                    )
+
+    msg.body = mail_body
+    mail.send(msg)
