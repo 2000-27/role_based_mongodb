@@ -39,7 +39,7 @@ def create_task():
         return jsonify({"success": False, "missing": str(err)}), 401
     if message is True:
         return jsonify({"success": True, "message": "Task is assigned"
-                                }), 200
+                        }), 200
 
     return jsonify({"success": False, "message": message}), 400
 
@@ -49,8 +49,8 @@ def create_task():
 def delete_task():
     info_schema = InfoSchema()
     try:
-        task = data_now_json_str(info_schema)
-        message = task_delete(task)
+        task_id = data_now_json_str(info_schema)
+        message = task_delete(task_id)
         if message is True:
             return jsonify({"success": True, "message":
                             "task is deleted"}), 200
@@ -65,8 +65,8 @@ def update_task():
     message = ""
     update_schema = UpdateSchema()
     try:
-        task = data_now_json_str(update_schema)
-        message = update(task, "admin")
+        task_id = data_now_json_str(update_schema)
+        message = update(task_id, "admin")
         if message is True:
             return jsonify({"success": True, "message":
                             "task is updated "}), 200

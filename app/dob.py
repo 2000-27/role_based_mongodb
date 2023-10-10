@@ -1,5 +1,5 @@
 from .util import (user_check, user_exist,
-                   task_id_is_valid, role_valid, check_status)
+                   task_id_is_valid, role_valid, check_status, calculate_salary)
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
@@ -44,7 +44,7 @@ def user_task(task, assign_by):
     if ObjectId(decoded_jwt['user_id']) == user['_id']:
         message = "permission denied"
         return message
-    print("ddfsdf",task)
+
     task_id = mongo.db.tasks.insert_one({
                  "user_id": str(user['_id']),
                  "assigned_by": decoded_jwt['user_id'],
@@ -61,47 +61,61 @@ def user_task(task, assign_by):
 
 
 def task_delete(task):
-
-    if task_id_is_valid(task['task_id']) is None:
-        message = "Invalid ObjectId"
-        return message
-   
     if task_id_is_valid(task['task_id']):
         mongo.db.tasks.delete_one({
             "_id": ObjectId(task['task_id'])
         })
-        message = True
-        return message
+        return True
 
     message = "Invalid objectId"
     return message
 
 
 def update(task, updated_by):
-    
-    task_id_valid = task_id_is_valid(task['task_id'])   
-    if task_id_valid is None:
-        
-        raise Exception("invalid ObjectId")
-
-    keysList = list(task.keys())
-    if 'status' in keysList:
-        message = check_status(task)
-        if message is not None:
-            return message
+    task_id_valid = task_id_is_valid(task['task_id'])
 
     if task_id_valid:
-        filter = {'_id': ObjectId(task['task_id'])}
         keysList = list(task.keys())
-        for field in keysList:
-            if field != "task_id":
-                data = {field: task[field]}
-                update_field = {"$set": data}
+        if 'status' in keysList:
+            message = check_status(task)
+            if message is not None:
+                return message
 
-                mongo.db.tasks.update_one(filter, update_field)
-        message = True
-        mail_send(task['task_id'], updated_by, "updated")
-        return message
+        if task_id_valid:
+            filter = {'_id': ObjectId(task['task_id'])}
+            keysList = list(task.keys())
+            for field in keysList:
+                if field != "task_id":
+                    data = {field: task[field]}
+                    update_field = {"$set": data}
+
+                    mongo.db.tasks.update_one(filter, update_field)
+            message = True
+            mail_send(task['task_id'], updated_by, "updated")
+            return message
 
     message = "Invalid objectId"
     return message
+
+
+def salary_slip(user_id):
+    try:
+        all_task_list = list(mongo.db.tasks.find({'user_id': user_id}))
+        if len(all_task_list) == 0:
+            message = "Invalid ObjectId"
+            return message
+
+        total_amount, payslip = calculate_salary(all_task_list)
+        if total_amount != 0:
+            print("ggg",total_amount)
+            print("slip",payslip)
+            mail_send(user_id, "Employee", "salary", total_amount, payslip)
+            message = "salary is generated"
+            return message
+
+        message = "All task are not completed"
+        return message
+    except Exception as err:
+        print("jamm",err)
+        message = "Invalid ObjectId"
+        return message
