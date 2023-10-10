@@ -46,6 +46,7 @@ def task_exit(task_id):
 def task_id_is_valid(task_id):
     try:
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+       
         if task is None:
             return None
         return True
@@ -62,6 +63,10 @@ def role_valid(role):
 
 
 def check_status(task):
+    
+    task = mongo.db.tasks.find_one({"_id": ObjectId(task['task_id'])})
+    
+    print("tt",task)
     status_list = ["todo", "in-progress", "under-review", "done"]
     if task['status'].lower() not in status_list:
         msg = "enter a valid status"
@@ -93,8 +98,6 @@ def serialize_list(list):
 def mail_send(task_id, role, status):
 
     task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
-    print("task",task)
-
     if status == "task_created":
         user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
         mail_body = "Hi , "+user['username'].capitalize() + "   your " + role.capitalize() + "  assign you a task  :- "+'"'+task['task_description'] + '"' 

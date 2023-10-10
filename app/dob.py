@@ -78,17 +78,18 @@ def task_delete(task):
 
 
 def update(task, updated_by):
-   
+    
+    task_id_valid = task_id_is_valid(task['task_id'])   
+    if task_id_valid is None:
+        
+        raise Exception("invalid ObjectId")
+
     keysList = list(task.keys())
     if 'status' in keysList:
         message = check_status(task)
         if message is not None:
             return message
 
-    task_id_valid = task_id_is_valid(task['task_id'])   
-    if task_id_valid is None:
-        message = "invalid ObjectId"
-        return message
     if task_id_valid:
         filter = {'_id': ObjectId(task['task_id'])}
         keysList = list(task.keys())

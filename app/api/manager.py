@@ -80,6 +80,7 @@ def delete_task():
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 401
 
+
     try:
         token = token_decode()
         task_details = mongo.db.tasks.find_one({"_id":

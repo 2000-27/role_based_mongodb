@@ -46,4 +46,4 @@ class ViewSchema(EmployeeSchema):
 class StatusSchema(Schema):
     status = fields.Str(required=True)
     task_id = fields.String(required=True)
-    time_needed = fields.Integer(required=False)
+    time_needed = fields.Integer(required=True)
