@@ -72,27 +72,29 @@ def task_delete(task):
 
 
 def update(task, updated_by):
-    task_id_valid = task_id_is_valid(task['task_id'])
-
-    if task_id_valid:
+    if task_id_is_valid(task['task_id']):
+        change = False
         keysList = list(task.keys())
         if 'status' in keysList:
             message = check_status(task)
             if message is not None:
                 return message
 
-        if task_id_valid:
-            filter = {'_id': ObjectId(task['task_id'])}
-            keysList = list(task.keys())
-            for field in keysList:
-                if field != "task_id":
-                    data = {field: task[field]}
-                    update_field = {"$set": data}
+        filter = {'_id': ObjectId(task['task_id'])}
+        keysList = list(task.keys())
+        for field in keysList:
+            if field != "task_id":
+                data = {field: task[field]}
+                update_field = {"$set": data}
+                mongo.db.tasks.update_one(filter, update_field)
+                change = True
 
-                    mongo.db.tasks.update_one(filter, update_field)
-            message = True
-            mail_send(task['task_id'], updated_by, "updated")
-            return message
+        if change:
+            if 'status' in keysList:
+                mail_send(task['task_id'], updated_by, "updated")
+            return True
+        message = "Enter field to update"
+        return message
 
     message = "Invalid objectId"
     return message
@@ -100,13 +102,17 @@ def update(task, updated_by):
 
 def salary_slip(user_id):
     try:
+        complete_task_list = list(mongo.db.tasks.find({'user_id': user_id,
+                                                       "status": "done"}))
         all_task_list = list(mongo.db.tasks.find({'user_id': user_id}))
-        if len(all_task_list) == 0:
-            message = "Invalid ObjectId"
+        
+        if len(all_task_list) != len(complete_task_list):
+            message = "All task are not completed"
             return message
 
         total_amount, payslip = calculate_salary(all_task_list)
-        if total_amount != 0:
+        print("total amount", total_amount)
+        if total_amount:
             print("ggg",total_amount)
             print("slip",payslip)
             mail_send(user_id, "Employee", "salary", total_amount, payslip)
@@ -115,7 +121,6 @@ def salary_slip(user_id):
 
         message = "All task are not completed"
         return message
-    except Exception as err:
-        print("jamm",err)
+    except Exception:
         message = "Invalid ObjectId"
         return message

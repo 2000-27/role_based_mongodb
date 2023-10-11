@@ -29,7 +29,8 @@ def view_task():
     decoded_jwt = token_decode()
     user = mongo.db.users.find_one({'_id': ObjectId(decoded_jwt['user_id'])})
     all_task_list = list(mongo.db.tasks.find({'email': user['email']}))
-    if len(all_task_list) == 0:
+    if not len(all_task_list):
+        
         return jsonify({"success": False, "message":
                         "No task is assign"}), 400
 
