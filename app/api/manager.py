@@ -116,14 +116,18 @@ def update_task():
 
 
 @manager_bp.route('/generate-salary', endpoint='assign_salary',
-                  methods=['GET'])
+                  methods=['PATCH'])
 @manager_required
 def assign_salary():
     user_id = request.args.get('user_id', default=None)
     if user_id is not None:
         try:
-            message = salary_slip(user_id)
-            print("salaryyyy",message)
+            task_details = mongo.db.tasks.find_one({"user_id":user_id})
+            if task_details is not None:
+                message = salary_slip(user_id)
+                print("salaryyyy",message)
+                return jsonify({"success": False, "message": message}), 400
+            message = "Invalid ObjectId"
             return jsonify({"success": False, "message": message}), 400
         except Exception as err:
             message = "Invalid ObjectId"
