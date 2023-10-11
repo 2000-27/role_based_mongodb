@@ -4,6 +4,7 @@ from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
 from app.token import token_decode
+import copy
 from app.util import mail_send
 
 
@@ -79,14 +80,12 @@ def update(task, updated_by):
             if message is not None:
                 return message
 
+        temp_dict = copy.deepcopy(task)
+        del temp_dict['task_id']
         filter = {'_id': ObjectId(task['task_id'])}
-        keysList = list(task.keys())
-        for field in keysList:
-            if field != "task_id":
-                data = {field: task[field]}
-                update_field = {"$set": data}
-                mongo.db.tasks.update_one(filter, update_field)
-                      
+        new_value = {"$set": temp_dict}
+        mongo.db.tasks.update_one(filter, new_value)
+
         if 'status' in keysList:
             mail_send(task['task_id'], updated_by, "updated")
         return True

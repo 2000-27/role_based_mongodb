@@ -65,7 +65,7 @@ def update_task():
     message = ""
     update_schema = UpdateSchema()
     try:
-        task_id = data_now_json_str(update_schema)
+        task_id = data_now_json_str(update_schema)     
         message = update(task_id, "admin")
         if message is True:
             return jsonify({"success": True, "message":
