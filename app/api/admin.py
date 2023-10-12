@@ -34,23 +34,23 @@ def create_task():
     task_schema = TaskSchema()
     try:
         user = data_now_json_str(task_schema)
-        message = user_task(user, "ADMIN")
+        message = user_task(user, "admin")
     except Exception as err:
         return jsonify({"success": False, "missing": str(err)}), 401
     if message is True:
         return jsonify({"success": True, "message": "Task is assigned"
                         }), 200
+
     return jsonify({"success": False, "message": message}), 400
 
 
 @admin_bp.route('/delete-task', endpoint='delete-task', methods=['DELETE'])
 @admin_required
 def delete_task():
-    message = ""
     info_schema = InfoSchema()
     try:
-        task = data_now_json_str(info_schema)
-        message = task_delete(task)
+        task_id = data_now_json_str(info_schema)
+        message = task_delete(task_id)
         if message is True:
             return jsonify({"success": True, "message":
                             "task is deleted"}), 200
@@ -65,8 +65,8 @@ def update_task():
     message = ""
     update_schema = UpdateSchema()
     try:
-        task = data_now_json_str(update_schema)
-        message = update(task)
+        task_id = data_now_json_str(update_schema)     
+        message = update(task_id, "admin")
         if message is True:
             return jsonify({"success": True, "message":
                             "task is updated "}), 200

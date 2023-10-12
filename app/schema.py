@@ -21,6 +21,7 @@ class TaskSchema(EmployeeSchema):
     description = fields.String(required=True)
     due_date = fields.String(required=True)
     user_name = fields.String(required=False)
+    rate = fields.Integer(required=True)
 
 
 class InfoSchema(EmployeeSchema):
@@ -45,3 +46,4 @@ class ViewSchema(EmployeeSchema):
 class StatusSchema(Schema):
     status = fields.Str(required=True)
     task_id = fields.String(required=True)
+    time_needed = fields.Integer(required=True)

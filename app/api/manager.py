@@ -2,9 +2,9 @@ from flask import jsonify, Blueprint, request
 from app.token import manager_required
 from . import mongo
 from app.token import token_decode
-from app.dob import add_user, user_task, task_delete, update
+from app.dob import add_user, user_task, task_delete, update ,salary_slip
 from app.util import serialize_list, serialize_doc
-from app.util import data_now_json_str
+from app.util import data_now_json_str, calculate_salary
 from app.schema import TaskSchema, UserSchema, InfoSchema, UpdateSchema
 from bson.objectid import ObjectId
 manager_bp = Blueprint("manager", __name__, url_prefix="manager")
@@ -79,7 +79,7 @@ def delete_task():
         task = data_now_json_str(info_schema)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 401
-    
+
     try:
         token = token_decode()
         task_details = mongo.db.tasks.find_one({"_id":
@@ -91,8 +91,8 @@ def delete_task():
                                 "task is deleted"}), 200
             return jsonify({"success": False, "message": message}), 400
         return jsonify({"success": False, "message": "Permission denied"}), 401
-    except Exception as err:
-        return jsonify({"success": False, "message":"invalid objectId"}), 400
+    except Exception:
+        return jsonify({"success": False, "message": "invalid objectId"}), 400
 
 
 @manager_bp.route('/update-task', endpoint='update_task', methods=['POST'])
@@ -106,10 +106,32 @@ def update_task():
         task_details = mongo.db.tasks.find_one({"_id":
                                                 ObjectId(task['task_id'])})
         if token['user_id'] == task_details['assigned_by']:
-            message = update(task)
+            message = update(task, "manager")
             if message is True:
                 return jsonify({"success": True, "message": "task is updated"}), 200
             return jsonify({"success": False, "message": message}), 400
         return jsonify({"success": False, "message": "Permission denied"}), 401
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
+
+
+@manager_bp.route('/generate-salary', endpoint='assign_salary',
+                  methods=['PATCH'])
+@manager_required
+def assign_salary():
+    user_id = request.args.get('user_id', default=None)
+    if user_id is not None:
+        try:
+            task_details = mongo.db.tasks.find_one({"user_id":user_id})
+            if task_details is not None:
+                message = salary_slip(user_id)
+                print("salaryyyy",message)
+                return jsonify({"success": False, "message": message}), 400
+            message = "Invalid ObjectId"
+            return jsonify({"success": False, "message": message}), 400
+        except Exception as err:
+            message = "Invalid ObjectId"
+            return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify({"success": False,
+                    "message": "Please enter valid a user id"}), 400

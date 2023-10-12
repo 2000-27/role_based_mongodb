@@ -29,10 +29,11 @@ def admin_required(f):
     def decorator():
         try:
             decoded_jwt = token_decode()
-            
+
             user = user_details(decoded_jwt)
             if user['role'].lower() != 'admin':
-                return jsonify({"message": "401 Unauthorized", "success": False}), 401
+                return jsonify({"message": "401 Unauthorized",
+                                "success": False}), 401
         except Exception as err:
             return jsonify({"message": str(err), "success": False}), 400
         return f()
@@ -45,7 +46,8 @@ def manager_required(f):
             decoded_jwt = token_decode()
             user = user_details(decoded_jwt)
             if user['role'].lower() != 'manager':
-                return jsonify({"message": "401 Unauthorized", "success": False}), 401
+                return jsonify({"message": "401 Unauthorized",
+                                "success": False}), 401
         except Exception as err:
             return jsonify({"message": str(err), "success": False}), 400
         return f()
@@ -58,7 +60,8 @@ def employee_required(f):
             decoded_jwt = token_decode()
             user = user_details(decoded_jwt)
             if user['role'] != 'employee':
-                return jsonify({"message": "401 Unauthorized", "success": False}), 401
+                return jsonify({"message": "401 Unauthorized",
+                                "success": False}), 401
         except Exception as err:
             return jsonify({"message": str(err), "success": False}), 400
         return f()

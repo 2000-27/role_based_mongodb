@@ -1,4 +1,9 @@
-import  os
-algor = "HS256"
+from dotenv import load_dotenv
+import os
 
-SECRET_KEY = "SECRET_KEY"
+load_dotenv()
+
+algorithum = os.environ.get("algorithum")
+
+sender_email = os.environ.get("sender_email")
+SECRET_KEY = os.environ.get("SECRET_KEY")

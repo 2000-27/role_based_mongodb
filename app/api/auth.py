@@ -3,7 +3,7 @@ from marshmallow import ValidationError
 from json import dumps, loads
 from app import mongo
 import datetime
-from app.config import algor
+from app.config import algorithum
 from flask_bcrypt import check_password_hash
 from app.schema import UserSchema, LoginSchema
 from app.dob import add_user
@@ -50,8 +50,8 @@ def login():
         user_id = user['_id']
         payload = {"user_id": str(user_id), "user_role": str(user['role']),
                    "exp": datetime.datetime.utcnow() +
-                   datetime.timedelta(hours=2)}
-        encoded_jwt = jwt.encode(payload, "secret", algorithm=algor)
+                   datetime.timedelta(hours=10)}
+        encoded_jwt = jwt.encode(payload, "secret", algorithm=algorithum)
         details = {"access token": str(encoded_jwt), "user_id": str(user['_id'])}
         return jsonify({"success": True, "message": "Login successfully",
                        "details": details}), 200
