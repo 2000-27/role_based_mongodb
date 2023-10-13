@@ -20,7 +20,7 @@ def create_user():
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    if user['role'] != "manager":
+    if user['role'] == "employee":
         message = add_user(user)
         if message is True:
             return jsonify({"success": True, "message": "Register sucessfully"

@@ -1,5 +1,6 @@
 from .util import (user_check, user_exist,
-                   task_id_is_valid, role_valid, check_status, calculate_salary)
+                   task_id_is_valid, role_valid,
+                   check_status, calculate_salary, orgnisation_exist,get_supervisor)
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
@@ -15,6 +16,9 @@ def add_user(user):
     if user['confirm_password'] != user['password']:
         message = "Password and confirm password should be same"
         return message
+    if orgnisation_exist(user['company_name']):
+        message = "Please enter a valid company_name"
+        return message
     is_user_name_valid = user_check(user['user_name'])
     if is_user_name_valid is False:
         message = "Please enter a valid username"
@@ -22,13 +26,20 @@ def add_user(user):
     if role_valid(user['role']):
         message = "Please enter a valid role"
         return message
+    supervisor = get_supervisor(user['role'])
     hash_password = generate_password_hash(user['password'])
+    user['password'] = hash_password
+    user['confirm_password'] = hash_password
+  
     mongo.db.users.insert_one({
-                "email": user['email'],
-                "password": hash_password,
-                "username": user['user_name'],
-                "role": user['role'],
-                }).inserted_id
+        "user_name": user['user_name'],
+        "email": user['email'],
+        "password": user['password'],
+        "role": user['role'],
+        "company_name": user['company_name'],
+        'supervisor': supervisor
+    })
+
     message = True
     return message
 

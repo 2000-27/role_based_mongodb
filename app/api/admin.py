@@ -17,13 +17,13 @@ def create_user():
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    if user['role'] != "admin":
+    if user['role'] == "manager":
         message = add_user(user)
         if message is True:
             return jsonify({"success": True, "message": "Register sucessfully"
                             }), 200
         return jsonify({"success": True, "message": message}), 400
-    message = "Admin can add only EMPLOYEE AND MANAGER"
+    message = "Admin can add only manager"
     return jsonify({"success": False, "message": message}), 400
 
 

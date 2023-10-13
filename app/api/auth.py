@@ -3,6 +3,7 @@ from marshmallow import ValidationError
 from json import dumps, loads
 from app import mongo
 import datetime
+from app.util import create_orginsation
 from app.config import algorithum
 from flask_bcrypt import check_password_hash
 from app.schema import UserSchema, LoginSchema
@@ -17,15 +18,19 @@ def register():
     request_data = request.get_json()
     user_schema = UserSchema()
     try:
+        create_orginsation()
         result = user_schema.load(request_data)
     except ValidationError as err:
         return jsonify({"success": False, "message": str(err)}), 400
     data_now_json_str = dumps(result)
     user = loads(data_now_json_str)
-    message = add_user(user)
-    if message is True:
-        return jsonify({"success": True,
-                        "message": "Register sucessfully"}), 200
+    if user['role'] != 'employee':
+        message = add_user(user)
+        if message is True:
+            return jsonify({"success": True,
+                            "message": "Register sucessfully"}), 200
+        return jsonify({"success": False, "message": message}), 400
+    message = "Admin and Manager can only register"
     return jsonify({"success": False, "message": message}), 400
 
 
@@ -40,8 +45,9 @@ def login():
 
     data_now_json_str = dumps(result)
     data = loads(data_now_json_str)
-
+    print("data",data['email'])
     user = mongo.db.users.find_one({"email": data['email']})
+    print("kfjds",user)
     if user is None:
         return jsonify({"success": False,
                         'message': "There is no user, Please signup"}), 400

@@ -6,6 +6,8 @@ from marshmallow import ValidationError
 from bson.objectid import ObjectId
 from app.helper_string import (salary_message, update_task_id,
                                update_status, assign_task)
+from app.token import token_decode
+from app.config import gst_number, organisation_name
 from flask_mail import Message
 from app.config import sender_email
 from app import mail
@@ -34,6 +36,18 @@ def task_check(email):
         return True
 
 
+def get_supervisor(role):
+    if role == 'employee':
+        token = token_decode()
+        print("token", token)
+        return ObjectId(token['user_id'])
+    
+    if role == 'manager':
+        admin_details = mongo.db.users.find_one({"role": "admin"})
+        return admin_details['_id']
+    return None
+
+
 def task_exit(task_id):
     try:
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
@@ -43,6 +57,14 @@ def task_exit(task_id):
         return False
     else:
         return True
+
+
+def orgnisation_exist(orgnisation_name):
+    print(organisation_name)
+    company = mongo.db.orgnisation.find_one({"orgnization_name": orgnisation_name})
+    if company is None:
+        return True
+    return False
 
 
 def task_id_is_valid(task_id):
@@ -148,3 +170,20 @@ def calculate_salary(user_id, task_list):
         print("error",err)
 
     return (total_salary[0], pay_slip)
+
+
+def create_orginsation():
+    filter = {'orgnization_name': organisation_name}
+    temp_dict = {
+         "GST_NO": gst_number,
+         "orgnization_name": organisation_name,
+         "Address": {
+                    "city": "Noida",
+                    "state": "Delhi",
+                    "country": "India"
+                    }
+     }
+    company = mongo.db.orgnisation.find_one(filter)
+    
+    if company is None:
+        mongo.db.orgnisation.insert_one(temp_dict).inserted_id
