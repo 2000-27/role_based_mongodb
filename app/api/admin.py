@@ -1,35 +1,43 @@
-from flask import jsonify, Blueprint, request
+from flask import jsonify, Blueprint
 from app.token import admin_required
-from app.dob import (add_user, user_task, task_delete, update, orgnization)
+from app.dob import (add_user, user_task, task_delete, update, orgnization,
+                     organisation_details)
 from app.schema import (TaskSchema, InfoSchema,
-                        UserSchema, UpdateSchema, OrgnizationSchema)
+                        UserSchema, UpdateSchema, OrgnizationSchema,
+                        getInfoSchema)
 from app.util import data_now_json_str, role_valid
-from app.config import Organisation_key
+
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-@admin_bp.route('/create_orgnization', endpoint='create_orgnization',
-                methods=['POST', 'PATCH'])
-def create_orgnization():
-    orgnization_key = request.args.get('organization_key', default=None)
-    if orgnization_key is None:
-        message = "organization_key required"
-        return jsonify({"success": False, "message": message}), 400  
-    
-    if orgnization_key == Organisation_key:
+
+@admin_bp.route('/get_organisation/<token>', endpoint='get_details',
+                methods=['POST'])
+def get_organisation(token):
+    try:
         orgnization_schema = OrgnizationSchema()
-        try:
-            data = data_now_json_str(orgnization_schema)
-            message = orgnization(data)
-            return jsonify({"success": True, "message": message}), 200
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-    message = "invalid organization key"
-    return jsonify({"success": False, "message": message}), 400    
+        
+        data = data_now_json_str(orgnization_schema)
+        message = orgnization(data,token)
+        return jsonify({"success": True, "message": message}), 200
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+
+@admin_bp.route('/create_orgnization', endpoint='create_orgnization',
+                methods=['POST'])
+def create_orgnization():
+    info_schema = getInfoSchema()
+    try:
+        data = data_now_json_str(info_schema)
+        message = organisation_details(data)
+        return jsonify({"success": True, "message": message}), 200
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
 
 @admin_bp.route('/create-user', endpoint='create_user', methods=['POST'])
 @admin_required
-def create_user():    
+def create_user():
     message = ""
     user_schema = UserSchema()
     try:

@@ -1,7 +1,7 @@
 from .util import (user_check, user_exist,
                    task_id_is_valid, role_valid,
                    check_status, calculate_salary, orgnisation_exist,
-                   get_supervisor, user_details, task_details)
+                   get_supervisor, user_details, task_details, decoded_string)
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
@@ -10,35 +10,43 @@ import copy
 from app.util import mail_send
 
 
-def orgnization(user):
-    company = mongo.db.orgnizations.find_one({"organization_name": user['organization_name']})
-    print(company)
-    if company is None:
-        if user_exist("email", user['email']):
-            message = "This email is already register"
-            return message
-
-        if user['confirm_password'] != user['password']:
-            message = "Password and confirm password should be same"
-            return message
+def orgnization(user, token):
+    try:
+        base64_string = decoded_string(token)
+        print("hiii", base64_string[0])
         hash_password = generate_password_hash(user['password'])
         mongo.db.users.insert_one({
             "user_name": user['user_name'],
-            "email": user['email'],
+            "email": base64_string[0],
             "password": hash_password,
             "role": "admin",
-            "organization_name": user['organization_name'],
+            "organization_name": base64_string[1],
             'supervisor': "no"
         })
+        print("hiii")
         mongo.db.orgnizations.insert_one({
             "organization_name": user['organization_name'],
             "gst_number": user['gst_number'],
             "address": user['address'],
             "pincode": user['pincode'],
             "state": user['state'],
-            'country': user['country']
+            'country': user['country'] 
         })
         message = "Register sucessfully"
+        return message
+    except Exception:
+        message = "invalid token"
+        return message
+
+
+def organisation_details(user):
+    company = mongo.db.orgnizations.find_one({"organization_name": user['organization_name']})
+    if company is None:
+        if user_exist("email", user['email']):
+            message = "This email is already register"
+            return message
+        mail_send(user, "admin", "verification")
+        message = "Please check your mail"
         return message
     message = "This organization is already register"
     return message

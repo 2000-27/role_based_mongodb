@@ -2,3 +2,4 @@ salary_message = "Congratulations {} ,\n your task details are :- \n {} \n your 
 assign_task = " Hi , {} your {} assign you a task :- '{}'"
 update_status = " Hi, {} status of {} updated to  '{}'"
 update_task_id = "The status of your task-id = '{}'  updated to  '{}'"
+verification_mail = "Congratulations! We've  successfully created your organisation account. Go to the page:{}"
