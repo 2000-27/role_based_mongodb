@@ -2,7 +2,7 @@ from flask import jsonify, Blueprint, request
 from app.token import manager_required
 from . import mongo
 from app.token import token_decode
-from app.dob import add_user, user_task, task_delete, update ,salary_slip
+from app.dob import add_user, user_task, task_delete, update, salary_slip
 from app.util import serialize_list, serialize_doc
 from app.util import data_now_json_str, task_details, role_valid
 from app.schema import TaskSchema, UserSchema, InfoSchema, UpdateSchema

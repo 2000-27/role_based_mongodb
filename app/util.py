@@ -67,9 +67,7 @@ def orgnisation_exist(organization_name):
     print(organization_name)
     orgnization = mongo.db.orgnizations.find_one({"organization_name": organization_name})
     print("company_name",orgnization)
-
     if orgnization is None:
-
         return True
     return False
 

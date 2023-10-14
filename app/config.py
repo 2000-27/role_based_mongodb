@@ -7,4 +7,4 @@ algorithum = os.environ.get("algorithum")
 
 sender_email = os.environ.get("sender_email")
 SECRET_KEY = os.environ.get("SECRET_KEY")
-
+Organisation_key = os.environ.get("ORGANIZATION_KEY")

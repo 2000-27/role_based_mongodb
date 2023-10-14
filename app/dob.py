@@ -51,11 +51,11 @@ def add_user(user):
     if user['confirm_password'] != user['password']:
         message = "Password and confirm password should be same"
         return message
-  
+
     if orgnisation_exist(user['organization_name']):
         message = "Please enter a valid company_name"
         return message
-    
+
     supervisor = get_supervisor(user)
     if supervisor is None:
         message = "Please enter the same orgnization name"
@@ -67,8 +67,7 @@ def add_user(user):
     if role_valid(user['role']):
         message = "Please enter a valid role"
         return message
-    
-    
+
     hash_password = generate_password_hash(user['password'])
     user['password'] = hash_password
     user['confirm_password'] = hash_password
@@ -82,7 +81,7 @@ def add_user(user):
         'supervisor': str(supervisor)
     })
 
-    message = True
+    message = "Register successfully"
     return message
 
 

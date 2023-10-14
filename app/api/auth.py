@@ -3,6 +3,7 @@ from marshmallow import ValidationError
 from json import dumps, loads
 from app import mongo
 import datetime
+from app.util import user_details
 from app.config import algorithum
 from flask_bcrypt import check_password_hash
 from app.schema import UserSchema, LoginSchema
@@ -24,9 +25,6 @@ def register():
     user = loads(data_now_json_str)
     if user['role'] == 'manager':
         message = add_user(user)
-        if message is True:
-            return jsonify({"success": True,
-                            "message": "Register sucessfully"}), 200
         return jsonify({"success": False, "message": message}), 400
     message = "Manager can only register"
     return jsonify({"success": False, "message": message}), 400
@@ -44,7 +42,7 @@ def login():
     data_now_json_str = dumps(result)
     data = loads(data_now_json_str)
    
-    user = mongo.db.users.find_one({"email": data['email']})
+    user = user_details("email", data['email'])
     
     if user is None:
         return jsonify({"success": False,

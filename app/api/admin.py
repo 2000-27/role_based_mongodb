@@ -1,25 +1,30 @@
-from flask import jsonify, Blueprint
+from flask import jsonify, Blueprint, request
 from app.token import admin_required
 from app.dob import (add_user, user_task, task_delete, update, orgnization)
 from app.schema import (TaskSchema, InfoSchema,
                         UserSchema, UpdateSchema, OrgnizationSchema)
 from app.util import data_now_json_str, role_valid
+from app.config import Organisation_key
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-
-@admin_bp.route('/create_orgnization', endpoint='create_orgnization', methods=['POST'])
+@admin_bp.route('/create_orgnization', endpoint='create_orgnization',
+                methods=['POST', 'PATCH'])
 def create_orgnization():
-    orgnization_schema = OrgnizationSchema()
-    try:
-        data = data_now_json_str(orgnization_schema)
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 400
-    try:
-        message = orgnization(data)
-        return jsonify({"success": True, "message": message}), 200
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 400
+    orgnization_key = request.args.get('organization_key', default=None)
+    if orgnization_key is None:
+        message = "organization_key required"
+        return jsonify({"success": False, "message": message}), 400  
     
+    if orgnization_key == Organisation_key:
+        orgnization_schema = OrgnizationSchema()
+        try:
+            data = data_now_json_str(orgnization_schema)
+            message = orgnization(data)
+            return jsonify({"success": True, "message": message}), 200
+        except Exception as err:
+            return jsonify({"success": False, "message": str(err)}), 400
+    message = "invalid organization key"
+    return jsonify({"success": False, "message": message}), 400    
 
 
 @admin_bp.route('/create-user', endpoint='create_user', methods=['POST'])
@@ -43,7 +48,7 @@ def create_user():
         return jsonify({"success": True, "message": message}), 400
     message = "Admin can add only manager"
     return jsonify({"success": False, "message": message}), 400
-    
+
 
 @admin_bp.route('/create-task', endpoint='create_task', methods=['POST'])
 @admin_required
