@@ -1,21 +1,39 @@
 from flask import jsonify, Blueprint
 from app.token import admin_required
-from app.dob import (add_user, user_task, task_delete, update)
+from app.dob import (add_user, user_task, task_delete, update, orgnization)
 from app.schema import (TaskSchema, InfoSchema,
-                        UserSchema, UpdateSchema)
-from app.util import data_now_json_str
+                        UserSchema, UpdateSchema, OrgnizationSchema)
+from app.util import data_now_json_str, role_valid
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+
+@admin_bp.route('/create_orgnization', endpoint='create_orgnization', methods=['POST'])
+def create_orgnization():
+    orgnization_schema = OrgnizationSchema()
+    try:
+        data = data_now_json_str(orgnization_schema)
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+    try:
+        message = orgnization(data)
+        return jsonify({"success": True, "message": message}), 200
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+    
 
 
 @admin_bp.route('/create-user', endpoint='create_user', methods=['POST'])
 @admin_required
-def create_user():
+def create_user():    
     message = ""
     user_schema = UserSchema()
     try:
         user = data_now_json_str(user_schema)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
+    if role_valid(user['role']):
+        message = "Enter a valid role"
+        return jsonify({"success": False, "message": message}), 400
 
     if user['role'] == "manager":
         message = add_user(user)
@@ -25,7 +43,7 @@ def create_user():
         return jsonify({"success": True, "message": message}), 400
     message = "Admin can add only manager"
     return jsonify({"success": False, "message": message}), 400
-
+    
 
 @admin_bp.route('/create-task', endpoint='create_task', methods=['POST'])
 @admin_required
@@ -36,7 +54,7 @@ def create_task():
         user = data_now_json_str(task_schema)
         message = user_task(user, "admin")
     except Exception as err:
-        return jsonify({"success": False, "missing": str(err)}), 401
+        return jsonify({"success": False, "mesage": str(err)}), 401
     if message is True:
         return jsonify({"success": True, "message": "Task is assigned"
                         }), 200

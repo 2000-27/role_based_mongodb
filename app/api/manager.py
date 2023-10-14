@@ -4,7 +4,7 @@ from . import mongo
 from app.token import token_decode
 from app.dob import add_user, user_task, task_delete, update ,salary_slip
 from app.util import serialize_list, serialize_doc
-from app.util import data_now_json_str, calculate_salary
+from app.util import data_now_json_str, task_details, role_valid
 from app.schema import TaskSchema, UserSchema, InfoSchema, UpdateSchema
 from bson.objectid import ObjectId
 manager_bp = Blueprint("manager", __name__, url_prefix="manager")
@@ -19,7 +19,9 @@ def create_user():
         user = data_now_json_str(user_schema)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
-
+    if role_valid(user['role']):
+        message = "Enter a valid role"
+        return jsonify({"success": False, "message": message}), 400
     if user['role'] == "employee":
         message = add_user(user)
         if message is True:
@@ -37,7 +39,7 @@ def view_task():
     decoded_jwt = token_decode()
     user_id = decoded_jwt['user_id']
     if task_id is None:
-        all_task = list(mongo.db.tasks.find({'assigned_by': user_id}))
+        all_task = list(task_details('assigned_by', user_id))
 
         if len(all_task) == 0:
             return jsonify({"success": False, "message":
@@ -46,7 +48,7 @@ def view_task():
         return jsonify({"success": True, "details": all_task}), 200
 
     try:
-        task = mongo.db.tasks.find_one({'_id': ObjectId(task_id)})
+        task = task_details('_id', ObjectId(task_id))
         if user_id == task['assigned_by']:
             task = serialize_doc(task)
             return jsonify({"success": True, "details": task})
@@ -82,9 +84,8 @@ def delete_task():
 
     try:
         token = token_decode()
-        task_details = mongo.db.tasks.find_one({"_id":
-                                                ObjectId(task['task_id'])})
-        if token['user_id'] == task_details['assigned_by']:
+        task_detail = task_details("_id",ObjectId(task['task_id']))
+        if token['user_id'] == task_detail['assigned_by']:
             message = task_delete(task)
             if message is True:
                 return jsonify({"success": True, "message":
@@ -103,9 +104,8 @@ def update_task():
     try:
         task = data_now_json_str(update_schema)
         token = token_decode()
-        task_details = mongo.db.tasks.find_one({"_id":
-                                                ObjectId(task['task_id'])})
-        if token['user_id'] == task_details['assigned_by']:
+        task_detail = task_details("_id",ObjectId(task['task_id']))
+        if token['user_id'] == task_detail['assigned_by']:
             message = update(task, "manager")
             if message is True:
                 return jsonify({"success": True, "message": "task is updated"}), 200

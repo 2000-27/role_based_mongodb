@@ -16,7 +16,6 @@ def view_task():
     task_id = request.args.get('task_id', default=None)
     if task_id is not None:
         task = task_id_is_valid(task_id)
-        print("good",task)
         if task_id_is_valid(task_id):
             try:
                 task = mongo.db.tasks.find_one({'_id': ObjectId(task_id)})

@@ -1,6 +1,7 @@
 from .util import (user_check, user_exist,
                    task_id_is_valid, role_valid,
-                   check_status, calculate_salary, orgnisation_exist,get_supervisor)
+                   check_status, calculate_salary, orgnisation_exist,
+                   get_supervisor, user_details, task_details)
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
@@ -9,15 +10,55 @@ import copy
 from app.util import mail_send
 
 
+def orgnization(user):
+    company = mongo.db.orgnizations.find_one({"organization_name": user['organization_name']})
+    print(company)
+    if company is None:
+        if user_exist("email", user['email']):
+            message = "This email is already register"
+            return message
+
+        if user['confirm_password'] != user['password']:
+            message = "Password and confirm password should be same"
+            return message
+        hash_password = generate_password_hash(user['password'])
+        mongo.db.users.insert_one({
+            "user_name": user['user_name'],
+            "email": user['email'],
+            "password": hash_password,
+            "role": "admin",
+            "organization_name": user['organization_name'],
+            'supervisor': "no"
+        })
+        mongo.db.orgnizations.insert_one({
+            "organization_name": user['organization_name'],
+            "gst_number": user['gst_number'],
+            "address": user['address'],
+            "pincode": user['pincode'],
+            "state": user['state'],
+            'country': user['country']
+        })
+        message = "Register sucessfully"
+        return message
+    message = "This organization is already register"
+    return message
+
+
 def add_user(user):
-    if user_exist(user['email']):
+    if user_exist("email", user['email']):
         message = "This email is already register"
         return message
     if user['confirm_password'] != user['password']:
         message = "Password and confirm password should be same"
         return message
-    if orgnisation_exist(user['company_name']):
+  
+    if orgnisation_exist(user['organization_name']):
         message = "Please enter a valid company_name"
+        return message
+    
+    supervisor = get_supervisor(user)
+    if supervisor is None:
+        message = "Please enter the same orgnization name"
         return message
     is_user_name_valid = user_check(user['user_name'])
     if is_user_name_valid is False:
@@ -26,7 +67,8 @@ def add_user(user):
     if role_valid(user['role']):
         message = "Please enter a valid role"
         return message
-    supervisor = get_supervisor(user['role'])
+    
+    
     hash_password = generate_password_hash(user['password'])
     user['password'] = hash_password
     user['confirm_password'] = hash_password
@@ -36,8 +78,8 @@ def add_user(user):
         "email": user['email'],
         "password": user['password'],
         "role": user['role'],
-        "company_name": user['company_name'],
-        'supervisor': supervisor
+        "organization_name": user['organization_name'],
+        'supervisor': str(supervisor)
     })
 
     message = True
@@ -45,13 +87,16 @@ def add_user(user):
 
 
 def user_task(task, assign_by):
-    if not user_exist(task['email']):
+
+    if not user_exist("_id", ObjectId(task['user_id'])):
         message = "user does not exist"
         return message
-    user = mongo.db.users.find_one({"email": task['email']})
+    
+    user = user_details("_id", ObjectId(task['user_id']))
     if user['role'] == "ADMIN":
-        message = "admin can assign task to manger and employee only"
+        message = "admin can assign task to manger only"
         return message
+    
     decoded_jwt = token_decode()
     if ObjectId(decoded_jwt['user_id']) == user['_id']:
         message = "permission denied"
@@ -108,15 +153,14 @@ def update(task, updated_by):
 def salary_slip(user_id):
     complete_task_list = list(mongo.db.tasks.find({'user_id': user_id,
                                                     "status": "done"}))
-    all_task_list = list(mongo.db.tasks.find({'user_id': user_id}))
+    all_task_list = list(task_details('user_id', user_id))
     if len(all_task_list) != len(complete_task_list):
         message = "All task are not completed"
         return message
     total_amount, payslip = calculate_salary(user_id, all_task_list)
     print("total amount", total_amount)
     if total_amount:
-        print("ggg",total_amount)
-        print("slip",payslip)
+      
         mail_send(user_id, "Employee", "salary", total_amount, payslip)
         message = "salary is generated"
         return message

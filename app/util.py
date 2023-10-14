@@ -7,7 +7,6 @@ from bson.objectid import ObjectId
 from app.helper_string import (salary_message, update_task_id,
                                update_status, assign_task)
 from app.token import token_decode
-from app.config import gst_number, organisation_name
 from flask_mail import Message
 from app.config import sender_email
 from app import mail
@@ -20,30 +19,35 @@ def user_check(username):
         return True
 
 
-def user_exist(email):
-    user = mongo.db.users.find_one({"email": email})
+def task_details(field, data):
+    task = mongo.db.tasks.find_one({field: data})
+    return task
+
+
+def user_details(field, data):
+    user = mongo.db.users.find_one({field: data})
+    return user
+
+
+def user_exist(field, data):
+    user = mongo.db.users.find_one({field: data})
+    
     if user is None:
         return False
     else:
         return True
 
 
-def task_check(email):
-    task = mongo.db.tasks.find_one({"email": email})
-    if task is None:
-        return False
-    else:
-        return True
-
-
-def get_supervisor(role):
-    if role == 'employee':
+def get_supervisor(user):
+    if user['role'] == 'employee':
         token = token_decode()
-        print("token", token)
-        return ObjectId(token['user_id'])
-    
-    if role == 'manager':
-        admin_details = mongo.db.users.find_one({"role": "admin"})
+        print("manager company name",token['organization_name'])
+        print("employee company name",user['organization_name'])
+        if user['organization_name'] == token['organization_name']:
+            return ObjectId(token['user_id'])
+        return None
+    if user['role'] == 'manager':
+        admin_details = mongo.db.users.find_one({"organization_name": user['organization_name']})
         return admin_details['_id']
     return None
 
@@ -59,10 +63,13 @@ def task_exit(task_id):
         return True
 
 
-def orgnisation_exist(orgnisation_name):
-    print(organisation_name)
-    company = mongo.db.orgnisation.find_one({"orgnization_name": orgnisation_name})
-    if company is None:
+def orgnisation_exist(organization_name):
+    print(organization_name)
+    orgnization = mongo.db.orgnizations.find_one({"organization_name": organization_name})
+    print("company_name",orgnization)
+
+    if orgnization is None:
+
         return True
     return False
 
@@ -86,7 +93,6 @@ def role_valid(role):
 
 
 def check_status(task):
-
     status_list = ["todo", "in-progress", "under-review", "done"]
     if task['status'].lower() not in status_list:
         msg = "enter a valid status"
@@ -170,20 +176,3 @@ def calculate_salary(user_id, task_list):
         print("error",err)
 
     return (total_salary[0], pay_slip)
-
-
-def create_orginsation():
-    filter = {'orgnization_name': organisation_name}
-    temp_dict = {
-         "GST_NO": gst_number,
-         "orgnization_name": organisation_name,
-         "Address": {
-                    "city": "Noida",
-                    "state": "Delhi",
-                    "country": "India"
-                    }
-     }
-    company = mongo.db.orgnisation.find_one(filter)
-    
-    if company is None:
-        mongo.db.orgnisation.insert_one(temp_dict).inserted_id

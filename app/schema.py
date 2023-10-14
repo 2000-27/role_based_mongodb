@@ -15,15 +15,15 @@ class UserSchema(LoginSchema, EmployeeSchema):
     confirm_password = fields.String(required=True)
     role = fields.String(required=True)
     user_name = fields.String(required=True)
-    company_name = fields.String(required=True)
+    organization_name = fields.String(required=True)
 
 
-class TaskSchema(EmployeeSchema):
+class TaskSchema(Schema):
     task_description = fields.String(required=True)
     due_date = fields.String(required=True)
-    user_name = fields.String(required=False)
+    user_id = fields.String(required=True)
     rate = fields.Integer(required=True)
-
+    
 
 class InfoSchema(EmployeeSchema):
     task_id = fields.String(required=True)
@@ -48,3 +48,14 @@ class StatusSchema(Schema):
     status = fields.Str(required=True)
     task_id = fields.String(required=True)
     time_needed = fields.Integer(required=True)
+
+
+class OrgnizationSchema(UserSchema):
+    gst_number = fields.String(required=True)
+    organization_name = fields.String(required=True)
+    address = fields.String(required=True)
+    pincode = fields.String(required=True)
+    state = fields.String(required=True)
+    country = fields.String(required=True)
+    role = fields.String(required=False)
+    company_name = fields.String(required=False)
