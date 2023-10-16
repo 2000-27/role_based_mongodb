@@ -13,6 +13,11 @@ from app.util import mail_send
 def orgnization(user, token):
     try:
         base64_string = decoded_string(token)
+        data = mongo.db.users.find_one({"organization_name": base64_string[1]})
+    except Exception:
+        data = None
+
+    if data is None:
         real_password = user['password']
         hash_password = generate_password_hash(user['password'])
         user_id = mongo.db.users.insert_one({
@@ -25,20 +30,19 @@ def orgnization(user, token):
         }).inserted_id
        
         mongo.db.orgnizations.insert_one({
-            "organization_name": user['organization_name'],
+            "organization_name": base64_string[1],
             "gst_number": user['gst_number'],
             "address": user['address'],
             "pincode": user['pincode'],
             "state": user['state'],
             'country': user['country'] 
         })
-        
+
         mail_send(user_id, real_password, "confirmation")
         message = "Register sucessfully"
         return message
-    except Exception:
-        message = "invalid token"
-        return message
+    message = "This organization is already register"
+    return message
 
 
 def organisation_details(user):

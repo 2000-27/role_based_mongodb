@@ -44,8 +44,6 @@ def user_exist(field, data):
 def get_supervisor(user):
     if user['role'] == 'employee':
         token = token_decode()
-        print("manager company name",token['organization_name'])
-        print("employee company name",user['organization_name'])
         if user['organization_name'] == token['organization_name']:
             return ObjectId(token['user_id'])
         return None
@@ -67,9 +65,7 @@ def task_exit(task_id):
 
 
 def orgnisation_exist(organization_name):
-    print(organization_name)
     orgnization = mongo.db.orgnizations.find_one({"organization_name": organization_name})
-    print("company_name",orgnization)
     if orgnization is None:
         return True
     return False
@@ -124,23 +120,18 @@ def serialize_list(list):
 
 def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
     if status == "salary":
-        print("in salary block")
         user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
-        mail_body = salary_message.format(user['username'].capitalize(), str(payslip), str(salary))
+        mail_body = salary_message.format(user['username'].capitalize(),
+                                          str(payslip), str(salary))
         recipients_email = user['email']
     if status == "verification":
-        print(task_id)
         base64_string = encoded_string(task_id)
-        print(type(base64_string))
-        print(base64_string)
         recipients_email = task_id['email']
         link = "http://127.0.0.1:5000/admin/get_organisation/" + base64_string
         mail_body = verification_mail.format(link)
-    
+
     if status == "confirmation":
-        print("hii")
         user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
-        print(user)
         recipients_email = user['email']
         mail_body = confirmation_mail.format(role)
     if status == "updated":
@@ -196,16 +187,11 @@ def calculate_salary(user_id, task_list):
 
 def encoded_string(user):
     data = user['email']+"," + user['organization_name']
-    print("data ",data)
     message_bytes = data.encode("ascii")
     base64_bytes = base64.b64encode(message_bytes)
     base64_string = str(base64_bytes)
-    
     base64_string = base64_string.split("b", 1)
-    
     base64_string = base64_string[1]
-    print(base64_bytes)
-    
     return base64_string
 
 

@@ -1,4 +1,4 @@
-from flask import jsonify, Blueprint
+from flask import jsonify, Blueprint, request
 from app.token import admin_required
 from app.dob import (add_user, user_task, task_delete, update, orgnization,
                      organisation_details)
@@ -14,11 +14,15 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
                 methods=['POST'])
 def get_organisation(token):
     try:
+        role = request.headers.get("role")
+        if role is None:
+            message = "admin is required"
+            return jsonify({"success": False, "message": message}), 400
         orgnization_schema = OrgnizationSchema()
-        
         data = data_now_json_str(orgnization_schema)
         message = orgnization(data, token)
         return jsonify({"success": True, "message": message}), 200
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
@@ -30,7 +34,6 @@ def create_orgnization():
     try:
         data = data_now_json_str(info_schema)
         message = organisation_details(data)
-        print(message)
         return jsonify({"success": True, "message": message}), 200
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400

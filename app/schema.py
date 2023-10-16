@@ -57,8 +57,7 @@ class OrgnizationSchema(UserSchema):
     pincode = fields.String(required=True)
     state = fields.String(required=True)
     country = fields.String(required=True)
-    role = fields.String(required=False)
-    company_name = fields.String(required=False)
+    organization_name = fields.String(required=False)
 
 
 class getInfoSchema(EmployeeSchema):
