@@ -13,17 +13,17 @@ from app.util import mail_send
 def orgnization(user, token):
     try:
         base64_string = decoded_string(token)
-        print("hiii", base64_string[0])
+        real_password = user['password']
         hash_password = generate_password_hash(user['password'])
-        mongo.db.users.insert_one({
+        user_id = mongo.db.users.insert_one({
             "user_name": user['user_name'],
             "email": base64_string[0],
             "password": hash_password,
             "role": "admin",
             "organization_name": base64_string[1],
             'supervisor': "no"
-        })
-        print("hiii")
+        }).inserted_id
+       
         mongo.db.orgnizations.insert_one({
             "organization_name": user['organization_name'],
             "gst_number": user['gst_number'],
@@ -32,6 +32,8 @@ def orgnization(user, token):
             "state": user['state'],
             'country': user['country'] 
         })
+        
+        mail_send(user_id, real_password, "confirmation")
         message = "Register sucessfully"
         return message
     except Exception:

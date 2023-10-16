@@ -17,7 +17,7 @@ def get_organisation(token):
         orgnization_schema = OrgnizationSchema()
         
         data = data_now_json_str(orgnization_schema)
-        message = orgnization(data,token)
+        message = orgnization(data, token)
         return jsonify({"success": True, "message": message}), 200
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
@@ -30,6 +30,7 @@ def create_orgnization():
     try:
         data = data_now_json_str(info_schema)
         message = organisation_details(data)
+        print(message)
         return jsonify({"success": True, "message": message}), 200
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
