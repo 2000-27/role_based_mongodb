@@ -10,13 +10,17 @@ import copy
 from app.util import mail_send
 
 
-def orgnization(user, token):
+def orgnization(user, token, key):
     try:
         base64_string = decoded_string(token)
+        print("hhhh", base64_string)
+
         data = mongo.db.users.find_one({"organization_name": base64_string[1]})
     except Exception:
         data = None
-
+    if key != base64_string[2]:
+        message = "Enter a valid key"
+        return message
     if data is None:
         real_password = user['password']
         hash_password = generate_password_hash(user['password'])
@@ -52,7 +56,7 @@ def organisation_details(user):
             message = "This email is already register"
             return message
         mail_send(user, "admin", "verification")
-        message = "Please check your mail"
+        message = "you get a verfication mail on your Email ID"
         return message
     message = "This organization is already register"
     return message

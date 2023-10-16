@@ -58,6 +58,7 @@ class OrgnizationSchema(UserSchema):
     state = fields.String(required=True)
     country = fields.String(required=True)
     organization_name = fields.String(required=False)
+    role = fields.String(required=False) 
 
 
 class getInfoSchema(EmployeeSchema):

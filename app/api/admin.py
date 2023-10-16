@@ -11,16 +11,16 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
 @admin_bp.route('/get_organisation/<token>', endpoint='get_details',
-                methods=['POST'])
+                methods=['POST', 'GET'])
 def get_organisation(token):
     try:
-        role = request.headers.get("role")
-        if role is None:
-            message = "admin is required"
+        key = request.args.get('key', default=None)
+        if key is None:
+            message = "key is required"
             return jsonify({"success": False, "message": message}), 400
         orgnization_schema = OrgnizationSchema()
         data = data_now_json_str(orgnization_schema)
-        message = orgnization(data, token)
+        message = orgnization(data, token, key)
         return jsonify({"success": True, "message": message}), 200
 
     except Exception as err:

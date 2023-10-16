@@ -23,6 +23,10 @@ def register():
         return jsonify({"success": False, "message": str(err)}), 400
     data_now_json_str = dumps(result)
     user = loads(data_now_json_str)
+    role = request.headers.get("role")
+    if role is None:
+        message = "Manager is required"
+
     if user['role'] == 'manager':
         message = add_user(user)
         return jsonify({"success": False, "message": message}), 400

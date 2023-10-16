@@ -9,7 +9,7 @@ from app.helper_string import (salary_message, update_task_id,
                                confirmation_mail)
 from app.token import token_decode
 import base64 
-from app.config import algorithum
+import random
 from flask_mail import Message
 from app.config import sender_email
 from app import mail
@@ -125,10 +125,10 @@ def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
                                           str(payslip), str(salary))
         recipients_email = user['email']
     if status == "verification":
-        base64_string = encoded_string(task_id)
+        base64_string, key = encoded_string(task_id)
         recipients_email = task_id['email']
         link = "http://127.0.0.1:5000/admin/get_organisation/" + base64_string
-        mail_body = verification_mail.format(link)
+        mail_body = verification_mail.format(link, key)
 
     if status == "confirmation":
         user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
@@ -186,13 +186,14 @@ def calculate_salary(user_id, task_list):
 
 
 def encoded_string(user):
-    data = user['email']+"," + user['organization_name']
+    num = int(random.random()*10000)
+    data = user['email']+"," + user['organization_name']+","+str(num)
     message_bytes = data.encode("ascii")
     base64_bytes = base64.b64encode(message_bytes)
     base64_string = str(base64_bytes)
     base64_string = base64_string.split("b", 1)
     base64_string = base64_string[1]
-    return base64_string
+    return base64_string, num
 
 
 def decoded_string(token):
@@ -200,3 +201,5 @@ def decoded_string(token):
     decode_string = decode_string.decode("utf-8")
     decode_string = decode_string.split(",")
     return decode_string
+
+
