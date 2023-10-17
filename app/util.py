@@ -152,14 +152,14 @@ def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
                 recipients_email = task['email']
     print("mail", mail_body)
     print("recipients", recipients_email)
-    # msg = Message(
-    #                      status,
-    #                      sender=sender_email,
-    #                      recipients=[recipients_email]
-    #                                 )
+    msg = Message(
+                         status,
+                         sender=sender_email,
+                         recipients=[recipients_email]
+                                    )
 
-    # msg.body = mail_body
-    # mail.send(msg)
+    msg.body = mail_body
+    mail.send(msg)
 
 
 def calculate_salary(user_id, task_list):

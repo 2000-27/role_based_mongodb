@@ -1,7 +1,7 @@
 from flask import jsonify, Blueprint, request
 from app.token import admin_required
-from app.dob import (add_user, user_task, task_delete, update, orgnization,
-                     organisation_details)
+from app.dob import (add_user, user_task, task_delete, update, update_workspace,
+                     organisation_details, create_workspace)
 from app.schema import (TaskSchema, InfoSchema,
                         UserSchema, UpdateSchema, OrgnizationSchema,
                         getInfoSchema)
@@ -10,17 +10,24 @@ from app.util import data_now_json_str, role_valid
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
-@admin_bp.route('/get_organisation/<token>', endpoint='get_details',
-                methods=['POST', 'GET'])
+@admin_bp.route('/get_organisation/<token>', endpoint='get_organisation', methods=['GET'])
 def get_organisation(token):
     try:
-        key = request.args.get('key', default=None)
-        if key is None:
-            message = "key is required"
-            return jsonify({"success": False, "message": message}), 400
+        print(token)
+        message = "your organisation is created"
+        create_workspace(token)
+        return jsonify({"success": True, "message": message}), 400
+
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+
+@admin_bp.route('/update_organization/<token>', endpoint='update_organization', methods=['POST'])
+def update_organization(token):
+    try:
         orgnization_schema = OrgnizationSchema()
         data = data_now_json_str(orgnization_schema)
-        message = orgnization(data, token, key)
+        message = update_workspace(data, token)
         return jsonify({"success": True, "message": message}), 200
 
     except Exception as err:

@@ -45,9 +45,7 @@ def login():
 
     data_now_json_str = dumps(result)
     data = loads(data_now_json_str)
-   
     user = user_details("email", data['email'])
-    
     if user is None:
         return jsonify({"success": False,
                         'message': "There is no user, Please signup"}), 400
