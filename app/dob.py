@@ -15,7 +15,8 @@ def create_workspace(token):
         base64_string = decoded_string(token)
         base64_string = base64_string.split(",")
         data = mongo.db.orgnizations.find_one({"organization_name": base64_string[1]})
-    except Exception:
+    except Exception as err:
+        print("your error is ",err)
         data = None
     if data is None:
         user_id = mongo.db.users.insert_one({
@@ -30,8 +31,8 @@ def create_workspace(token):
                 "admin": str(user_id)
             })
         message = "organization is created successfully"
-
-    message = "organization is already created"
+        return message
+    message = "organization is created successfully"
     return message    
 
 
