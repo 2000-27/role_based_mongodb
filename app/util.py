@@ -5,10 +5,10 @@ from json import dumps, loads
 from marshmallow import ValidationError
 from bson.objectid import ObjectId
 from app.helper_string import (salary_message, update_task_id,
-                               update_status, assign_task, verification_mail,
+                               update_status, assign_task,
                                confirmation_mail)
 from app.token import token_decode
-import base64 
+import base64
 import random
 from flask_mail import Message
 from app.config import sender_email
@@ -34,7 +34,6 @@ def user_details(field, data):
 
 def user_exist(field, data):
     user = mongo.db.users.find_one({field: data})
-    
     if user is None:
         return False
     else:
@@ -127,8 +126,8 @@ def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
     if status == "verification":
         base64_string, key = encoded_string(task_id)
         recipients_email = task_id['email']
-        link = "http://127.0.0.1:5000/admin/get_organisation/" + base64_string
-        mail_body = verification_mail.format(link, key)
+        link = "http://127.0.0.1:5000/admin/get_organisation/"+base64_string
+        mail_body = link
 
     if status == "confirmation":
         user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
@@ -157,8 +156,13 @@ def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
                          sender=sender_email,
                          recipients=[recipients_email]
                                     )
-
     msg.body = mail_body
+    if status == "verification":
+        msg.html = """<h1>Congratulation,</h1>
+                 <p></p>
+                 <p>We've  successfully created your account .Please Go to the page:</p>
+                 <a href={} >click on this link</a>""".format(link)
+
     mail.send(msg)
 
 
@@ -193,13 +197,17 @@ def encoded_string(user):
     base64_string = str(base64_bytes)
     base64_string = base64_string.split("b", 1)
     base64_string = base64_string[1]
-    return base64_string, num
+    base64_string = base64_string.split("'")
+    return base64_string[1], num
 
 
 def decoded_string(token):
     decode_string = base64.b64decode(token)
-    decode_string = decode_string.decode("utf-8")
-    decode_string = decode_string.split(",")
+    decode_string = str(decode_string)
+    decode_string = decode_string.split("b", 1)
+    decode_string = str(decode_string[1])
+    decode_string = decode_string.split("'")
+    decode_string = str(decode_string[1])
     return decode_string
 
 

@@ -11,58 +11,63 @@ from app.util import mail_send
 
 
 def create_workspace(token):
-    base64_string = decoded_string(token)
-    user_id = mongo.db.users.insert_one({
-            "email": base64_string[0],
-            "organization_name": base64_string[1],
-            "role": "admin",
-            'supervisor': "no"
-        }).inserted_id
+    try:
+        base64_string = decoded_string(token)
+        base64_string = base64_string.split(",")
+        data = mongo.db.orgnizations.find_one({"organization_name": base64_string[1]})
+    except Exception:
+        data = None
+    if data is None:
+        user_id = mongo.db.users.insert_one({
+                "email": base64_string[0],
+                "organization_name": base64_string[1],
+                "role": "admin",
+                'supervisor': "no"
+            }).inserted_id
 
-    mongo.db.orgnizations.insert_one({
-            "organization_name": base64_string[1],
-            "admin": str(user_id)
-        })
+        mongo.db.orgnizations.insert_one({
+                "organization_name": base64_string[1],
+                "admin": str(user_id)
+            })
+        message = "organization is created successfully"
+
+    message = "organization is already created"
+    return message    
 
 
 def update_workspace(user, token):
     try:
         base64_string = decoded_string(token)
-        print("hhhh", base64_string)
-        data = mongo.db.users.find_one({"organization_name": base64_string[1]})
-        print(data)
-    except Exception:
-        data = None
-    if data is not None:
-        real_password = user['password']
-        hash_password = generate_password_hash(user['password'])
-        
-        
-        user_info = {
-            "user_name": user['user_name'],
-            "password": hash_password
-        }
-        filter = {'email': base64_string[0]}
-        new_value = {"$set": user_info}
-        mongo.db.users.update_one(filter, new_value)
-       
-        orgnisation_info = {
-           
-            "gst_number": user['gst_number'],
-            "address": user['address'],
-            "pincode": user['pincode'],
-            "state": user['state'],
-            'country': user['country'] 
-        }
-        filter = {'organization_name': base64_string[1]}
-        new_value = {"$set": orgnisation_info}
-        mongo.db.orgnizations.update_one(filter, new_value)
-
-        mail_send(user_info, real_password, "confirmation")
-        message = "Register sucessfully"
+        base64_string = base64_string.split(",")
+        data = mongo.db.users.find_one({"email": base64_string[0]})
+        if data is not None:
+            real_password = user['password']
+            hash_password = generate_password_hash(user['password'])
+            user_info = {
+                "user_name": user['user_name'],
+                "password": hash_password
+            }
+            filter = {'email': base64_string[0]}
+            new_value = {"$set": user_info}
+            mongo.db.users.update_one(filter, new_value)
+            orgnisation_info = {
+                "gst_number": user['gst_number'],
+                "address": user['address'],
+                "pincode": user['pincode'],
+                "state": user['state'],
+                'country': user['country'] 
+            }
+            filter = {'organization_name': base64_string[1]}
+            new_value = {"$set": orgnisation_info}
+            mongo.db.orgnizations.update_one(filter, new_value)
+            message = "updated sucessfully"
+            return message
+        message = "your organization is not created"
         return message
-    message = "This organization is already register"
-    return message
+    
+    except Exception:
+        message = "Please enter a valid token"
+        return message
 
 
 def organisation_details(user):
@@ -191,7 +196,7 @@ def salary_slip(user_id):
         message = "All task are not completed"
         return message
     total_amount, payslip = calculate_salary(user_id, all_task_list)
-    print("total amount", total_amount)
+    
     if total_amount:
       
         mail_send(user_id, "Employee", "salary", total_amount, payslip)

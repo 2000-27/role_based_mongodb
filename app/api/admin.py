@@ -14,10 +14,8 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 def get_organisation(token):
     try:
         print(token)
-        message = "your organisation is created"
-        create_workspace(token)
+        message = create_workspace(token)
         return jsonify({"success": True, "message": message}), 400
-
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
@@ -29,7 +27,6 @@ def update_organization(token):
         data = data_now_json_str(orgnization_schema)
         message = update_workspace(data, token)
         return jsonify({"success": True, "message": message}), 200
-
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
