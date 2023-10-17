@@ -1,5 +1,5 @@
 import jwt
-from flask import request, abort, jsonify
+from flask import request, jsonify
 from . import mongo
 from bson.objectid import ObjectId
 

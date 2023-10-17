@@ -15,35 +15,52 @@ class UserSchema(LoginSchema, EmployeeSchema):
     confirm_password = fields.String(required=True)
     role = fields.String(required=True)
     user_name = fields.String(required=True)
+    organization_name = fields.String(required=True)
 
 
-class TaskSchema(EmployeeSchema):
-    description = fields.String(required=True)
+class TaskSchema(Schema):
+    task_description = fields.String(required=True)
     due_date = fields.String(required=True)
-    user_name = fields.String(required=False)
+    user_id = fields.String(required=True)
     rate = fields.Integer(required=True)
-
+    
 
 class InfoSchema(EmployeeSchema):
     task_id = fields.String(required=True)
     user_name = fields.String(required=False)
-    email = fields.String(required=False)
+    email = fields.Email(required=False)
 
 
 class UpdateSchema(Schema):
     task_id = fields.String(required=True)
-    description = fields.Str(required=False)
+    task_description = fields.Str(required=False)
     status = fields.Str(required=False)
-    email = fields.Str(required=False)
+    email = fields.Email(required=False)
 
 
 class ViewSchema(EmployeeSchema):
     task_id = fields.String(required=True)
     user_name = fields.String(required=False)
-    email = fields.String(required=False)
+    email = fields.Email(required=False)
 
 
 class StatusSchema(Schema):
     status = fields.Str(required=True)
     task_id = fields.String(required=True)
     time_needed = fields.Integer(required=True)
+
+
+class OrgnizationSchema(UserSchema):
+    gst_number = fields.String(required=True)
+    email = fields.Email(required=False)
+    address = fields.String(required=True)
+    pincode = fields.String(required=True)
+    state = fields.String(required=True)
+    country = fields.String(required=True)
+    organization_name = fields.String(required=False)
+    role = fields.String(required=False) 
+
+
+class getInfoSchema(EmployeeSchema):
+    user_name = fields.String(required=False)
+    organization_name = fields.String(required=True)

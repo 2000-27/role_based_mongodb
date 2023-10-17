@@ -5,7 +5,11 @@ from json import dumps, loads
 from marshmallow import ValidationError
 from bson.objectid import ObjectId
 from app.helper_string import (salary_message, update_task_id,
-                               update_status, assign_task)
+                               update_status, assign_task,
+                               confirmation_mail)
+from app.token import token_decode
+import base64
+import random
 from flask_mail import Message
 from app.config import sender_email
 from app import mail
@@ -18,20 +22,34 @@ def user_check(username):
         return True
 
 
-def user_exist(email):
-    user = mongo.db.users.find_one({"email": email})
+def task_details(field, data):
+    task = mongo.db.tasks.find_one({field: data})
+    return task
+
+
+def user_details(field, data):
+    user = mongo.db.users.find_one({field: data})
+    return user
+
+
+def user_exist(field, data):
+    user = mongo.db.users.find_one({field: data})
     if user is None:
         return False
     else:
         return True
 
 
-def task_check(email):
-    task = mongo.db.tasks.find_one({"email": email})
-    if task is None:
-        return False
-    else:
-        return True
+def get_supervisor(user):
+    if user['role'] == 'employee':
+        token = token_decode()
+        if user['organization_name'] == token['organization_name']:
+            return ObjectId(token['user_id'])
+        return None
+    if user['role'] == 'manager':
+        admin_details = mongo.db.users.find_one({"organization_name": user['organization_name']})
+        return admin_details['_id']
+    return None
 
 
 def task_exit(task_id):
@@ -43,6 +61,13 @@ def task_exit(task_id):
         return False
     else:
         return True
+
+
+def orgnisation_exist(organization_name):
+    orgnization = mongo.db.orgnizations.find_one({"organization_name": organization_name})
+    if orgnization is None:
+        return True
+    return False
 
 
 def task_id_is_valid(task_id):
@@ -64,7 +89,6 @@ def role_valid(role):
 
 
 def check_status(task):
-
     status_list = ["todo", "in-progress", "under-review", "done"]
     if task['status'].lower() not in status_list:
         msg = "enter a valid status"
@@ -95,11 +119,21 @@ def serialize_list(list):
 
 def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
     if status == "salary":
-        print("in salary block")
         user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
-        mail_body = salary_message.format(user['username'].capitalize(), str(payslip), str(salary))
+        mail_body = salary_message.format(user['username'].capitalize(),
+                                          str(payslip), str(salary))
         recipients_email = user['email']
-    else:
+    if status == "verification":
+        base64_string, key = encoded_string(task_id)
+        recipients_email = task_id['email']
+        link = "http://127.0.0.1:5000/admin/get_organisation/"+base64_string
+        mail_body = link
+
+    if status == "confirmation":
+        user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
+        recipients_email = user['email']
+        mail_body = confirmation_mail.format(role)
+    if status == "updated":
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
         if status == "task_created":
             user = mongo.db.users.find_one({"_id": ObjectId(task['user_id'])})
@@ -117,14 +151,19 @@ def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
                 recipients_email = task['email']
     print("mail", mail_body)
     print("recipients", recipients_email)
-    # msg = Message(
-    #                      status,
-    #                      sender=sender_email,
-    #                      recipients=[recipients_email]
-    #                                 )
+    msg = Message(
+                         status,
+                         sender=sender_email,
+                         recipients=[recipients_email]
+                                    )
+    msg.body = mail_body
+    if status == "verification":
+        msg.html = """<h1>Congratulation,</h1>
+                 <p></p>
+                 <p>We've  successfully created your account .Please Go to the page:</p>
+                 <a href={} >click on this link</a>""".format(link)
 
-    # msg.body = mail_body
-    # mail.send(msg)
+    mail.send(msg)
 
 
 def calculate_salary(user_id, task_list):
@@ -148,3 +187,27 @@ def calculate_salary(user_id, task_list):
         print("error",err)
 
     return (total_salary[0], pay_slip)
+
+
+def encoded_string(user):
+    num = int(random.random()*10000)
+    data = user['email']+"," + user['organization_name']+","+str(num)
+    message_bytes = data.encode("ascii")
+    base64_bytes = base64.b64encode(message_bytes)
+    base64_string = str(base64_bytes)
+    base64_string = base64_string.split("b", 1)
+    base64_string = base64_string[1]
+    base64_string = base64_string.split("'")
+    return base64_string[1], num
+
+
+def decoded_string(token):
+    decode_string = base64.b64decode(token)
+    decode_string = str(decode_string)
+    decode_string = decode_string.split("b", 1)
+    decode_string = str(decode_string[1])
+    decode_string = decode_string.split("'")
+    decode_string = str(decode_string[1])
+    return decode_string
+
+

@@ -1,5 +1,7 @@
 from .util import (user_check, user_exist,
-                   task_id_is_valid, role_valid, check_status, calculate_salary)
+                   task_id_is_valid, role_valid,
+                   check_status, calculate_salary, orgnisation_exist,
+                   get_supervisor, user_details, task_details, decoded_string)
 from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
@@ -8,12 +10,95 @@ import copy
 from app.util import mail_send
 
 
+def create_workspace(token):
+    try:
+        base64_string = decoded_string(token)
+        base64_string = base64_string.split(",")
+        data = mongo.db.orgnizations.find_one({"organization_name": base64_string[1]})
+    except Exception as err:
+        print("your error is ",err)
+        data = None
+    if data is None:
+        user_id = mongo.db.users.insert_one({
+                "email": base64_string[0],
+                "organization_name": base64_string[1],
+                "role": "admin",
+                'supervisor': "no"
+            }).inserted_id
+
+        mongo.db.orgnizations.insert_one({
+                "organization_name": base64_string[1],
+                "admin": str(user_id)
+            })
+        message = "organization is created successfully"
+        return message
+    message = "organization is created successfully"
+    return message    
+
+
+def update_workspace(user, token):
+    try:
+        base64_string = decoded_string(token)
+        base64_string = base64_string.split(",")
+        data = mongo.db.users.find_one({"email": base64_string[0]})
+        if data is not None:
+            real_password = user['password']
+            hash_password = generate_password_hash(user['password'])
+            user_info = {
+                "user_name": user['user_name'],
+                "password": hash_password
+            }
+            filter = {'email': base64_string[0]}
+            new_value = {"$set": user_info}
+            mongo.db.users.update_one(filter, new_value)
+            orgnisation_info = {
+                "gst_number": user['gst_number'],
+                "address": user['address'],
+                "pincode": user['pincode'],
+                "state": user['state'],
+                'country': user['country'] 
+            }
+            filter = {'organization_name': base64_string[1]}
+            new_value = {"$set": orgnisation_info}
+            mongo.db.orgnizations.update_one(filter, new_value)
+            message = "updated sucessfully"
+            return message
+        message = "your organization is not created"
+        return message
+    
+    except Exception:
+        message = "Please enter a valid token"
+        return message
+
+
+def organisation_details(user):
+    company = mongo.db.orgnizations.find_one({"organization_name": user['organization_name']})
+    if company is None:
+        if user_exist("email", user['email']):
+            message = "This email is already register"
+            return message
+        mail_send(user, "admin", "verification")
+        message = "you get a verfication mail on your Email ID"
+        return message
+    message = "This organization is already register"
+    return message
+
+
 def add_user(user):
-    if user_exist(user['email']):
+    if user_exist("email", user['email']):
         message = "This email is already register"
         return message
     if user['confirm_password'] != user['password']:
         message = "Password and confirm password should be same"
+        return message
+
+    if orgnisation_exist(user['organization_name']):
+        message = "Please enter a valid company_name"
+        return message
+
+    supervisor = get_supervisor(user)
+    if supervisor is None:
+        message = "Please enter the same orgnization name"
         return message
     is_user_name_valid = user_check(user['user_name'])
     if is_user_name_valid is False:
@@ -22,25 +107,35 @@ def add_user(user):
     if role_valid(user['role']):
         message = "Please enter a valid role"
         return message
+
     hash_password = generate_password_hash(user['password'])
+    user['password'] = hash_password
+    user['confirm_password'] = hash_password
+  
     mongo.db.users.insert_one({
-                "email": user['email'],
-                "password": hash_password,
-                "username": user['user_name'],
-                "role": user['role'],
-                }).inserted_id
-    message = True
+        "user_name": user['user_name'],
+        "email": user['email'],
+        "password": user['password'],
+        "role": user['role'],
+        "organization_name": user['organization_name'],
+        'supervisor': str(supervisor)
+    })
+
+    message = "Register successfully"
     return message
 
 
 def user_task(task, assign_by):
-    if not user_exist(task['email']):
+
+    if not user_exist("_id", ObjectId(task['user_id'])):
         message = "user does not exist"
         return message
-    user = mongo.db.users.find_one({"email": task['email']})
+    
+    user = user_details("_id", ObjectId(task['user_id']))
     if user['role'] == "ADMIN":
-        message = "admin can assign task to manger and employee only"
+        message = "admin can assign task to manger only"
         return message
+    
     decoded_jwt = token_decode()
     if ObjectId(decoded_jwt['user_id']) == user['_id']:
         message = "permission denied"
@@ -97,15 +192,14 @@ def update(task, updated_by):
 def salary_slip(user_id):
     complete_task_list = list(mongo.db.tasks.find({'user_id': user_id,
                                                     "status": "done"}))
-    all_task_list = list(mongo.db.tasks.find({'user_id': user_id}))
+    all_task_list = list(task_details('user_id', user_id))
     if len(all_task_list) != len(complete_task_list):
         message = "All task are not completed"
         return message
     total_amount, payslip = calculate_salary(user_id, all_task_list)
-    print("total amount", total_amount)
+    
     if total_amount:
-        print("ggg",total_amount)
-        print("slip",payslip)
+      
         mail_send(user_id, "Employee", "salary", total_amount, payslip)
         message = "salary is generated"
         return message
