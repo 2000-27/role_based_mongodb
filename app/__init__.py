@@ -38,10 +38,13 @@ def create_app(test_config=None):
     from app.api.admin import admin_bp
     from app.api.manager import manager_bp
     from app.api.employee import employee_bp
+    from app.api.company import organization_bp
     app.register_blueprint(auth, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(manager_bp, url_prefix='/manager')
     app.register_blueprint(employee_bp, url_prefix='/employee')
+    app.register_blueprint(organization_bp, url_prefix='/organization')
+    
     return app
 
 

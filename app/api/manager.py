@@ -1,10 +1,9 @@
 from flask import jsonify, Blueprint, request
 from app.token import manager_required
-from . import mongo
 from app.token import token_decode
 from app.dob import add_user, user_task, task_delete, update, salary_slip
-from app.util import serialize_list, serialize_doc
-from app.util import data_now_json_str, task_details, role_valid
+from app.util import (serialize_list, serialize_doc, data_now_json_str,
+                      task_details, role_valid)
 from app.schema import TaskSchema, UserSchema, InfoSchema, UpdateSchema
 from bson.objectid import ObjectId
 manager_bp = Blueprint("manager", __name__, url_prefix="manager")
@@ -122,8 +121,8 @@ def assign_salary():
     user_id = request.args.get('user_id', default=None)
     if user_id is not None:
         try:
-            task_details = mongo.db.tasks.find_one({"user_id":user_id})
-            if task_details is not None:
+            task = task_details("user_id", user_id)
+            if task is not None:
                 message = salary_slip(user_id)
                 print("salaryyyy",message)
                 return jsonify({"success": False, "message": message}), 400

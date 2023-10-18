@@ -23,7 +23,7 @@ class TaskSchema(Schema):
     due_date = fields.String(required=True)
     user_id = fields.String(required=True)
     rate = fields.Integer(required=True)
-    
+
 
 class InfoSchema(EmployeeSchema):
     task_id = fields.String(required=True)
@@ -58,7 +58,8 @@ class OrgnizationSchema(UserSchema):
     state = fields.String(required=True)
     country = fields.String(required=True)
     organization_name = fields.String(required=False)
-    role = fields.String(required=False) 
+    role = fields.String(required=False)
+    technology = fields.List(fields.String, required=True)
 
 
 class getInfoSchema(EmployeeSchema):

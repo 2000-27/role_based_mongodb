@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from json import dumps, loads
-from app import mongo
+
 import datetime
 from app.util import user_details
 from app.config import algorithum
