@@ -18,7 +18,6 @@ from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
 from app.token import token_decode
 import copy
-import json
 from app.util import mail_send
 
 
@@ -49,11 +48,31 @@ def create_workspace(token):
     return message
 
 
+def add_client(user):
+    if user["confirm_password"] != user["password"]:
+        message = "Password and confirm password should be same"
+        return (message, False)
+    user_exist = user_details("email", user["email"])
+    if user_exist is None:
+        mongo.db.users.insert_one(
+            {
+                "user_name": user["user_name"],
+                "email": user["email"],
+                "password": generate_password_hash(user["password"]),
+                "role": "client",
+            }
+        )
+        message = "register successfully"
+        return (message, True)
+    message = "This email is already register"
+    return (message, False)
+
+
 def update_workspace(user, token):
     try:
         base64_string = decoded_string(token)
         base64_string = base64_string.split(",")
-        data = mongo.db.users.find_one({"email": base64_string[0]})
+        data = user_details("email", base64_string[0])
         if data is not None:
             real_password = user["password"]
             hash_password = generate_password_hash(user["password"])
@@ -64,7 +83,7 @@ def update_workspace(user, token):
             orgnisation_info = {
                 "gst_number": user["gst_number"],
                 "address": user["address"],
-                "techology": user["technology"],
+                "technology": user["technology"],
                 "pincode": user["pincode"],
                 "state": user["state"],
                 "country": user["country"],
@@ -97,30 +116,18 @@ def organisation_details(user):
     return message
 
 
-def add_user(user):
+def add_user(user, role):
     if user_exist("email", user["email"]):
         message = "This email is already register"
-        return message
+        return message, False
     if user["confirm_password"] != user["password"]:
         message = "Password and confirm password should be same"
-        return message
-
-    if orgnisation_exist(user["organization_name"]):
-        message = "Please enter a valid company_name"
-        return message
-
-    supervisor = get_supervisor(user)
-    if supervisor is None:
-        message = "Please enter the same orgnization name"
-        return message
+        return message, False
+    supervisor, organization_name = get_supervisor(user)
     is_user_name_valid = user_check(user["user_name"])
     if is_user_name_valid is False:
         message = "Please enter a valid username"
-        return message
-    if role_valid(user["role"]):
-        message = "Please enter a valid role"
-        return message
-
+        return message, False
     hash_password = generate_password_hash(user["password"])
     user["password"] = hash_password
     user["confirm_password"] = hash_password
@@ -130,14 +137,14 @@ def add_user(user):
             "user_name": user["user_name"],
             "email": user["email"],
             "password": user["password"],
-            "role": user["role"],
-            "organization_name": user["organization_name"],
+            "role": role,
+            "organization_name": organization_name,
             "supervisor": str(supervisor),
         }
     )
 
     message = "Register successfully"
-    return message
+    return message, True
 
 
 def user_task(task, assign_by):
@@ -212,7 +219,6 @@ def salary_slip(user_id):
         message = "All task are not completed"
         return message
     total_amount, payslip = calculate_salary(user_id, all_task_list)
-
     if total_amount:
         mail_send(user_id, "Employee", "salary", total_amount, payslip)
         message = "salary is generated"
@@ -232,8 +238,9 @@ def organization_info(all_organization_list):
             }
             for x in all_organization_list
         ]
-
+        print(total_employee)
         return total_employee
-    except Exception:
-        message = "all organization are not update"
+    except Exception as err:
+        print("your error is ", err)
+        message = "please update all organization"
         return message

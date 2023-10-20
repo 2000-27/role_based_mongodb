@@ -10,4 +10,3 @@ def init_db():
 def get_db(app, mongo):
     app.config["MONGO_URI"] = os.environ.get("MONGO_URI")
     mongo.init_app(app)
-

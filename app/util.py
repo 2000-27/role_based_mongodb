@@ -10,6 +10,8 @@ from app.helper_string import (
     update_status,
     assign_task,
     confirmation_mail,
+    purposal_mail,
+    verification_mail,
 )
 from app.token import token_decode
 import base64
@@ -17,6 +19,10 @@ import random
 from flask_mail import Message
 from app.config import sender_email
 from app import mail
+import datetime
+from app.config import algorithum
+from flask_bcrypt import check_password_hash
+import jwt
 
 
 def user_check(username):
@@ -45,17 +51,8 @@ def user_exist(field, data):
 
 
 def get_supervisor(user):
-    if user["role"] == "employee":
-        token = token_decode()
-        if user["organization_name"] == token["organization_name"]:
-            return ObjectId(token["user_id"])
-        return None
-    if user["role"] == "manager":
-        admin_details = mongo.db.users.find_one(
-            {"organization_name": user["organization_name"]}
-        )
-        return admin_details["_id"]
-    return None
+    token = token_decode()
+    return (token["user_id"], token["organization_name"])
 
 
 def task_exit(task_id):
@@ -137,7 +134,23 @@ def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
         recipients_email = task_id["email"]
         link = "http://127.0.0.1:5000/admin/get_organisation/" + base64_string
         mail_body = link
+    if status == "purposal":
+        token = token_decode()
+        print(task_id)
+        print("tttt", task_id["organization_name"])
+        company = mongo.db.orgnizations.find_one(
+            {"organization_name": task_id["organization_name"]}
+        )
 
+        user = mongo.db.users.find_one({"_id": ObjectId(company["admin"])})
+        recipients_email = user["email"]
+        mail_body = purposal_mail.format(
+            user["user_name"],
+            user["organization_name"],
+            task_id["task_description"],
+            "www.google.com",
+            "www.youtube.com",
+        )
     if status == "confirmation":
         user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
         recipients_email = user["email"]
@@ -169,13 +182,9 @@ def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
     msg = Message(status, sender=sender_email, recipients=[recipients_email])
     msg.body = mail_body
     if status == "verification":
-        msg.html = """<h1>Congratulation,</h1>
-                 <p></p>
-                 <p>We've  successfully created your account .Please Go to the page:</p>
-                 <a href={} >click on this link</a>""".format(
-            link
-        )
-
+        msg.html = verification_mail.format(link)
+    if status == "purposal":
+        msg.html = mail_body
     mail.send(msg)
 
 
@@ -237,14 +246,54 @@ def decoded_string(token):
 
 
 def total_strength(organization_name):
-    total_employee = len(
-        list(mongo.db.users.find({"organization_name": organization_name}))
+    total_employee = list(
+        mongo.db.users.aggregate(
+            [
+                {"$match": {"organization_name": organization_name}},
+                {"$count": organization_name},
+            ]
+        )
     )
-    return total_employee
+    for x in total_employee:
+        return x[organization_name]
 
 
 def technologies(organization_name):
-    data = mongo.db.orgnizations.find_one(
-        {"organization_name": organization_name}, {"technology": 1, "_id": 0}
-    )
+    data = mongo.db.orgnizations.find_one({"organization_name": organization_name})
     return data["technology"]
+
+
+def encoded_jwt(data):
+    user = user_details("email", data["email"])
+    if user is None:
+        message = "There is no user, Please signup"
+        return (message, False)
+    try:
+        if not check_password_hash(user["password"], data["password"]):
+            message = "Please Enter the correct password"
+            return (message, False)
+    except Exception:
+        message = "please update the details"
+        return (message, False)
+
+    if user["role"] != "client":
+        payload = {
+            "user_id": str(user["_id"]),
+            "user_role": user["role"],
+            "organization_name": str(user["organization_name"]),
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=10),
+        }
+    else:
+        payload = {
+            "user_id": str(user["_id"]),
+            "user_role": str(user["role"]),
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=10),
+        }
+
+    encode_jwt = jwt.encode(payload, "secret", algorithm=algorithum)
+    details = {"access token": str(encode_jwt), "user_id": str(user["_id"])}
+    return (details, True)
+
+
+def send_purposal(task):
+    print("hiii", task)

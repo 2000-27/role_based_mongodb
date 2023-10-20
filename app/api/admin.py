@@ -17,7 +17,7 @@ from app.schema import (
     OrgnizationSchema,
     getInfoSchema,
 )
-from app.util import data_now_json_str, role_valid
+from app.util import data_now_json_str
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -66,17 +66,10 @@ def create_user():
         user = data_now_json_str(user_schema)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
-    if role_valid(user["role"]):
-        message = "Enter a valid role"
-        return jsonify({"success": False, "message": message}), 400
-
-    if user["role"] == "manager":
-        message = add_user(user)
-        if message is True:
-            return jsonify({"success": True, "message": "Register sucessfully"}), 200
-        return jsonify({"success": True, "message": message}), 400
-    message = "Admin can add only manager"
-    return jsonify({"success": False, "message": message}), 400
+    message, response = add_user(user, "manager")
+    if response:
+        return jsonify({"success": True, "message": message}), 200
+    return jsonify({"success": True, "message": message}), 400
 
 
 @admin_bp.route("/create-task", endpoint="create_task", methods=["POST"])
