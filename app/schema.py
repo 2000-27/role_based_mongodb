@@ -14,6 +14,8 @@ class LoginSchema(EmployeeSchema):
 class UserSchema(LoginSchema, EmployeeSchema):
     confirm_password = fields.String(required=True)
     user_name = fields.String(required=True)
+    first_name = fields.String(required=True)
+    last_name = fields.String(required=True)
 
 
 class TaskSchema(Schema):
@@ -57,10 +59,15 @@ class OrgnizationSchema(UserSchema):
     country = fields.String(required=True)
     confirm_password = fields.String(required=False)
     technology = fields.List(fields.String, required=True)
+    user_name = fields.String(required=False)
+
+
+# first_name = fields.String(required=False)
+# last_name = fields.String(required=False)
 
 
 class getInfoSchema(EmployeeSchema):
-    user_name = fields.String(required=False)
+    user_name = fields.String(required=True)
     organization_name = fields.String(required=True)
 
 

@@ -23,12 +23,19 @@ def view_list():
 @client_bp.route("/send-purposal", endpoint="purposal", methods=["POST"])
 @client_required
 def purposal():
-    message = ""
     task_schema = SendTaskSchema()
     try:
         task = data_now_json_str(task_schema)
-        print("jlllllppp", task)
+        company = mongo.db.orgnizations.find_one(
+            {"organization_name": task["organization_name"]}
+        )
+        print(task, company)
+        if company is None:
+            return (
+                jsonify({"success": False, "message": "Enter a valid company name"}),
+                400,
+            )
         mail_send(task, "client", "purposal")
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
-    return jsonify("nikloo yaha see")
+    return jsonify({"success": True, "message": "You get a mail on your email Id"}), 200

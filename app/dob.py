@@ -2,7 +2,6 @@ from .util import (
     user_check,
     user_exist,
     task_id_is_valid,
-    role_valid,
     check_status,
     calculate_salary,
     orgnisation_exist,
@@ -25,7 +24,9 @@ def create_workspace(token):
     try:
         base64_string = decoded_string(token)
         base64_string = base64_string.split(",")
+        print("your string is", base64_string)
         data = mongo.db.orgnizations.find_one({"organization_name": base64_string[1]})
+        print(data)
     except Exception as err:
         print("your error is ", err)
         data = None
@@ -35,6 +36,7 @@ def create_workspace(token):
                 "email": base64_string[0],
                 "organization_name": base64_string[1],
                 "role": "admin",
+                "user_name": base64_string[2],
                 "supervisor": "no",
             }
         ).inserted_id
@@ -42,6 +44,7 @@ def create_workspace(token):
         mongo.db.orgnizations.insert_one(
             {"organization_name": base64_string[1], "admin": str(user_id)}
         )
+        print("ban gayi aha organization")
         message = "organization is created successfully"
         return message
     message = "organization is created successfully"
@@ -72,11 +75,17 @@ def update_workspace(user, token):
     try:
         base64_string = decoded_string(token)
         base64_string = base64_string.split(",")
+
         data = user_details("email", base64_string[0])
+
         if data is not None:
             real_password = user["password"]
             hash_password = generate_password_hash(user["password"])
-            user_info = {"user_name": user["user_name"], "password": hash_password}
+            user_info = {
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "password": hash_password,
+            }
             filter = {"email": base64_string[0]}
             new_value = {"$set": user_info}
             mongo.db.users.update_one(filter, new_value)
@@ -93,7 +102,7 @@ def update_workspace(user, token):
             mongo.db.orgnizations.update_one(filter, new_value)
             message = "updated sucessfully"
             return message
-        message = "your organization is not created"
+        message = "enter a valid url"
         return message
 
     except Exception:
@@ -109,6 +118,9 @@ def organisation_details(user):
         if user_exist("email", user["email"]):
             message = "This email is already register"
             return message
+        if user_exist("user_name", user["user_name"]):
+            message = "The username is already register"
+            return message
         mail_send(user, "admin", "verification")
         message = "you get a verfication mail on your Email ID"
         return message
@@ -119,6 +131,9 @@ def organisation_details(user):
 def add_user(user, role):
     if user_exist("email", user["email"]):
         message = "This email is already register"
+        return message, False
+    if user_exist("user_name", user["user_name"]):
+        message = "This user_name is already register"
         return message, False
     if user["confirm_password"] != user["password"]:
         message = "Password and confirm password should be same"
@@ -136,6 +151,8 @@ def add_user(user, role):
         {
             "user_name": user["user_name"],
             "email": user["email"],
+            "first_name": user["first_name"],
+            "last_name": user["last_name"],
             "password": user["password"],
             "role": role,
             "organization_name": organization_name,
@@ -166,12 +183,11 @@ def user_task(task, assign_by):
         {
             "user_id": str(user["_id"]),
             "assigned_by": decoded_jwt["user_id"],
-            "email": task["email"],
-            "task_description": task["description"],
+            "task_description": task["task_description"],
             "status": "todo",
             "due_date": task["due_date"],
             "rate": task["rate"],
-            "time_needed": 0,
+            "time_needed": 1,
         }
     ).inserted_id
     mail_send(task_id, assign_by, "task_created")

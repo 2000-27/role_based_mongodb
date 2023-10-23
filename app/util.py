@@ -11,11 +11,11 @@ from app.helper_string import (
     assign_task,
     confirmation_mail,
     purposal_mail,
+    accepted_mail,
     verification_mail,
 )
 from app.token import token_decode
 import base64
-import random
 from flask_mail import Message
 from app.config import sender_email
 from app import mail
@@ -117,6 +117,11 @@ def serialize_doc(doc):
     return doc
 
 
+def serialize_password(doc):
+    doc["password"] = str(doc["password"])
+    return doc
+
+
 def serialize_list(list):
     new_list = [serialize_doc(dictn) for dictn in list]
     return new_list
@@ -130,61 +135,66 @@ def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
         )
         recipients_email = user["email"]
     if status == "verification":
-        base64_string, key = encoded_string(task_id)
+        base64_string = encoded_string(
+            task_id["email"], task_id["organization_name"], task_id["user_name"]
+        )
         recipients_email = task_id["email"]
         link = "http://127.0.0.1:5000/admin/get_organisation/" + base64_string
-        mail_body = link
+
+        mail_body = verification_mail.format(link)
     if status == "purposal":
         token = token_decode()
-        print(task_id)
-        print("tttt", task_id["organization_name"])
         company = mongo.db.orgnizations.find_one(
             {"organization_name": task_id["organization_name"]}
         )
 
-        user = mongo.db.users.find_one({"_id": ObjectId(company["admin"])})
-        recipients_email = user["email"]
+        client = mongo.db.users.find_one({"_id": ObjectId(token["user_id"])})
+        admin = mongo.db.users.find_one({"_id": ObjectId(company["admin"])})
+        base64_string = encoded_string(client["email"], admin["email"])
+        recipients_email = admin["email"]
+        link = "http://127.0.0.1:5000/admin/purposal/" + base64_string
         mail_body = purposal_mail.format(
-            user["user_name"],
-            user["organization_name"],
+            admin["user_name"],
+            admin["organization_name"],
             task_id["task_description"],
-            "www.google.com",
+            link,
             "www.youtube.com",
         )
+    if status == "accepted_purposal":
+        mail_body = accepted_mail.format("dfsdfs", "dfsdfd")
+        recipients_email = task_id
     if status == "confirmation":
         user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
         recipients_email = user["email"]
         mail_body = confirmation_mail.format(role)
-    if status == "updated":
-        task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
-        if status == "task_created":
-            user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
-            mail_body = assign_task.format(
-                user["username"].capitalize(),
-                role.capitalize(),
-                task["task_description"],
-            )
-            recipients_email = task["email"]
-        if status == "updated":
-            if role == "employee":
-                user = mongo.db.users.find_one({"_id": ObjectId(task["assigned_by"])})
-                mail_body = update_status.format(
-                    user["username"].capitalize(), task_id, task["status"]
-                )
-                recipients_email = user["email"]
 
-            if role == "admin" or role == "manager":
-                user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
-                mail_body = update_task_id.format(task_id, task["status"])
-                recipients_email = task["email"]
+    task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+    if status == "task_created":
+        user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
+        mail_body = assign_task.format(
+            user["user_name"].capitalize(),
+            role.capitalize(),
+            task["task_description"],
+        )
+        print("hmmmm", task)
+        recipients_email = user["email"]
+
+    if status == "updated":
+        if role == "employee":
+            user = mongo.db.users.find_one({"_id": ObjectId(task["assigned_by"])})
+            mail_body = update_status.format(
+                user["username"].capitalize(), task_id, task["status"]
+            )
+            recipients_email = user["email"]
+
+        if role == "admin" or role == "manager":
+            user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
+            mail_body = update_task_id.format(task_id, task["status"])
+            recipients_email = task["email"]
     print("mail", mail_body)
     print("recipients", recipients_email)
     msg = Message(status, sender=sender_email, recipients=[recipients_email])
-    msg.body = mail_body
-    if status == "verification":
-        msg.html = verification_mail.format(link)
-    if status == "purposal":
-        msg.html = mail_body
+    msg.html = mail_body
     mail.send(msg)
 
 
@@ -223,16 +233,19 @@ def calculate_salary(user_id, task_list):
     return (total_salary[0], pay_slip)
 
 
-def encoded_string(user):
-    num = int(random.random() * 10000)
-    data = user["email"] + "," + user["organization_name"] + "," + str(num)
+def encoded_string(
+    email,
+    organization_name,
+    user_name="xxx",
+):
+    data = email + "," + organization_name + "," + user_name
     message_bytes = data.encode("ascii")
     base64_bytes = base64.b64encode(message_bytes)
     base64_string = str(base64_bytes)
     base64_string = base64_string.split("b", 1)
     base64_string = base64_string[1]
     base64_string = base64_string.split("'")
-    return base64_string[1], num
+    return base64_string[1]
 
 
 def decoded_string(token):
@@ -295,5 +308,34 @@ def encoded_jwt(data):
     return (details, True)
 
 
-def send_purposal(task):
-    print("hiii", task)
+def accept_purposal(token):
+    decoded_data = decoded_string(token)
+    decoded_data = decoded_data.split(",")
+    mail_send(decoded_data[0], decoded_data[1], "accepted_purposal")
+
+
+def view_all_employee():
+    token = token_decode()
+    admin = user_details("_id", ObjectId(token["user_id"]))
+    manager = mongo.db.users.find({"supervisor": str(admin["_id"])})
+    try:
+        manager = [
+            {
+                "manager_Id": str(x["_id"]),
+                "manager_Name": x["first_name"] + " " + x["last_name"],
+                "manager_email": x["email"],
+                "employee_details": [
+                    {
+                        "employee_Name": j["first_name"] + " " + j["last_name"],
+                        "employee_email": j["email"],
+                        "employee_ID": str(j["_id"]),
+                    }
+                    for j in list(mongo.db.users.find({"supervisor": str(x["_id"])}))
+                ],
+            }
+            for x in list(mongo.db.users.find({"supervisor": str(admin["_id"])}))
+        ]
+
+        return manager
+    except Exception as err:
+        print(err)

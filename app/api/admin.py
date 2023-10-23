@@ -17,7 +17,7 @@ from app.schema import (
     OrgnizationSchema,
     getInfoSchema,
 )
-from app.util import data_now_json_str
+from app.util import data_now_json_str, accept_purposal, view_all_employee
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -28,7 +28,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 def get_organisation(token):
     try:
         message = create_workspace(token)
-        return jsonify({"success": True, "message": message}), 400
+        return jsonify({"success": True, "message": message}), 200
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
@@ -57,6 +57,12 @@ def create_orgnization():
         return jsonify({"success": False, "message": str(err)}), 400
 
 
+@admin_bp.route("/purposal/<token>", endpoint="accept_purposal", methods=["GET"])
+def purposal(token):
+    accept_purposal(token)
+    return jsonify({"success": True, "message": "purposal is accepted"})
+
+
 @admin_bp.route("/create-user", endpoint="create_user", methods=["POST"])
 @admin_required
 def create_user():
@@ -78,8 +84,8 @@ def create_task():
     message = ""
     task_schema = TaskSchema()
     try:
-        user = data_now_json_str(task_schema)
-        message = user_task(user, "admin")
+        task = data_now_json_str(task_schema)
+        message = user_task(task, "admin")
     except Exception as err:
         return jsonify({"success": False, "mesage": str(err)}), 401
     if message is True:
@@ -115,3 +121,14 @@ def update_task():
         return jsonify({"success": False, "message": message}), 400
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
+
+
+@admin_bp.route("/view_employee", endpoint="view_employee", methods=["GET"])
+@admin_required
+def view_employee():
+    try:
+        message = view_all_employee()
+        return jsonify({"success": True, "details": message}), 200
+    except Exception as err:
+        print(err)
+        return jsonify(str(err)), 400
