@@ -22,6 +22,8 @@ from app import mail
 import datetime
 from app.config import algorithum
 from flask_bcrypt import check_password_hash
+import math
+from flask_paginate import get_page_parameter
 import jwt
 
 
@@ -127,75 +129,76 @@ def serialize_list(list):
     return new_list
 
 
-def mail_send(task_id, role, status, salary=0, payslip="not- generated"):
+def mail_send(user, role, status, salary=0, payslip="not- generated"):
     if status == "salary":
-        user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
+        user = mongo.db.users.find_one({"_id": ObjectId(user)})
         mail_body = salary_message.format(
             user["username"].capitalize(), str(payslip), str(salary)
         )
         recipients_email = user["email"]
     if status == "verification":
         base64_string = encoded_string(
-            task_id["email"], task_id["organization_name"], task_id["user_name"]
+            user["email"], user["organization_name"], user["user_name"]
         )
-        recipients_email = task_id["email"]
+        recipients_email = user["email"]
         link = "http://127.0.0.1:5000/admin/get_organisation/" + base64_string
 
         mail_body = verification_mail.format(link)
     if status == "purposal":
         token = token_decode()
         company = mongo.db.orgnizations.find_one(
-            {"organization_name": task_id["organization_name"]}
+            {"organization_name": user["organization_name"]}
         )
 
         client = mongo.db.users.find_one({"_id": ObjectId(token["user_id"])})
         admin = mongo.db.users.find_one({"_id": ObjectId(company["admin"])})
         base64_string = encoded_string(client["email"], admin["email"])
+
         recipients_email = admin["email"]
         link = "http://127.0.0.1:5000/admin/purposal/" + base64_string
         mail_body = purposal_mail.format(
             admin["user_name"],
             admin["organization_name"],
-            task_id["task_description"],
+            user["task_description"],
             link,
             "www.youtube.com",
         )
+
     if status == "accepted_purposal":
         mail_body = accepted_mail.format("dfsdfs", "dfsdfd")
-        recipients_email = task_id
+        recipients_email = user
     if status == "confirmation":
-        user = mongo.db.users.find_one({"_id": ObjectId(task_id)})
+        user = mongo.db.users.find_one({"_id": ObjectId(user)})
         recipients_email = user["email"]
         mail_body = confirmation_mail.format(role)
 
-    task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
     if status == "task_created":
+        task = mongo.db.tasks.find_one({"_id": user})
         user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
         mail_body = assign_task.format(
             user["user_name"].capitalize(),
             role.capitalize(),
             task["task_description"],
         )
-        print("hmmmm", task)
         recipients_email = user["email"]
 
-    if status == "updated":
-        if role == "employee":
-            user = mongo.db.users.find_one({"_id": ObjectId(task["assigned_by"])})
-            mail_body = update_status.format(
-                user["username"].capitalize(), task_id, task["status"]
-            )
-            recipients_email = user["email"]
+    # if status == "updated":
+    #     if role == "employee":
+    #         user = mongo.db.users.find_one({"_id": ObjectId(task["assigned_by"])})
+    #         mail_body = update_status.format(
+    #             user["username"].capitalize(), task_id, task["status"]
+    #         )
+    #         recipients_email = user["email"]
 
-        if role == "admin" or role == "manager":
-            user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
-            mail_body = update_task_id.format(task_id, task["status"])
-            recipients_email = task["email"]
+    #     if role == "admin" or role == "manager":
+    #         user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
+    #         mail_body = update_task_id.format(task_id, task["status"])
+    #         recipients_email = task["email"]
     print("mail", mail_body)
     print("recipients", recipients_email)
-    msg = Message(status, sender=sender_email, recipients=[recipients_email])
-    msg.html = mail_body
-    mail.send(msg)
+    # msg = Message(status, sender=sender_email, recipients=[recipients_email])
+    # msg.html = mail_body
+    # mail.send(msg)
 
 
 def calculate_salary(user_id, task_list):
@@ -339,3 +342,19 @@ def view_all_employee():
         return manager
     except Exception as err:
         print(err)
+
+
+def pagination(data):
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    per_page = 1
+    offset = (page - 1) * per_page
+    paginated_data = data[offset : offset + per_page]
+    response = {
+        "data": paginated_data,
+        "page": page,
+        "per_page": per_page,
+        "total": len(data),
+        "total_pages": math.ceil(len(data) / per_page),
+        "sucess": True,
+    }
+    return response

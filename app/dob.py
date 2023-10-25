@@ -4,7 +4,6 @@ from .util import (
     task_id_is_valid,
     check_status,
     calculate_salary,
-    orgnisation_exist,
     get_supervisor,
     user_details,
     task_details,
@@ -24,9 +23,7 @@ def create_workspace(token):
     try:
         base64_string = decoded_string(token)
         base64_string = base64_string.split(",")
-        print("your string is", base64_string)
         data = mongo.db.orgnizations.find_one({"organization_name": base64_string[1]})
-        print(data)
     except Exception as err:
         print("your error is ", err)
         data = None
@@ -44,7 +41,7 @@ def create_workspace(token):
         mongo.db.orgnizations.insert_one(
             {"organization_name": base64_string[1], "admin": str(user_id)}
         )
-        print("ban gayi aha organization")
+        print("organization is created successfully")
         message = "organization is created successfully"
         return message
     message = "organization is created successfully"
@@ -165,41 +162,43 @@ def add_user(user, role):
 
 
 def user_task(task, assign_by):
-    if not user_exist("_id", ObjectId(task["user_id"])):
-        message = "user does not exist"
-        return message
+    try:
+        decoded_jwt = token_decode()
+        print("manager", task["user_id"])
+        user = [mongo.db.users.find_one({"_id": ObjectId(x)}) for x in task["user_id"]]
+        all_employee = [x for x in user if x["supervisor"] == decoded_jwt["user_id"]]
+        if len(user) != len(all_employee):
+            message = "Enter a valid user_id"
+            return message
 
-    user = user_details("_id", ObjectId(task["user_id"]))
-    if user["role"] == "ADMIN":
-        message = "admin can assign task to manger only"
-        return message
+        task_id = [
+            mongo.db.tasks.insert_one(
+                {
+                    "user_id": str(user["_id"]),
+                    "assigned_by": decoded_jwt["user_id"],
+                    "task_description": task["task_description"],
+                    "status": "todo",
+                    "due_date": task["due_date"],
+                    "rate": task["rate"],
+                    "time_needed": 1,
+                }
+            ).inserted_id
+            for user in user
+        ]
 
-    decoded_jwt = token_decode()
-    if ObjectId(decoded_jwt["user_id"]) == user["_id"]:
-        message = "permission denied"
-        return message
-
-    task_id = mongo.db.tasks.insert_one(
-        {
-            "user_id": str(user["_id"]),
-            "assigned_by": decoded_jwt["user_id"],
-            "task_description": task["task_description"],
-            "status": "todo",
-            "due_date": task["due_date"],
-            "rate": task["rate"],
-            "time_needed": 1,
-        }
-    ).inserted_id
-    mail_send(task_id, assign_by, "task_created")
-    message = True
-    return message
+        [mail_send(x, assign_by, "task_created") for x in task_id]
+        message = "task is assigned"
+        return message, True
+    except Exception as err:
+        print("your error is", err)
+        message = "invalid user_id"
+        return message, False
 
 
 def task_delete(task):
     if task_id_is_valid(task["task_id"]):
         mongo.db.tasks.delete_one({"_id": ObjectId(task["task_id"])})
         return True
-
     message = "Invalid objectId"
     return message
 
@@ -254,7 +253,7 @@ def organization_info(all_organization_list):
             }
             for x in all_organization_list
         ]
-        print(total_employee)
+
         return total_employee
     except Exception as err:
         print("your error is ", err)

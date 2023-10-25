@@ -30,7 +30,6 @@ def admin_required(f):
     def decorator():
         try:
             decoded_jwt = token_decode()
-
             user = user_details(decoded_jwt)
             if user["role"].lower() != "admin":
                 return jsonify({"message": "401 Unauthorized", "success": False}), 401

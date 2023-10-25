@@ -21,7 +21,7 @@ class UserSchema(LoginSchema, EmployeeSchema):
 class TaskSchema(Schema):
     task_description = fields.String(required=True)
     due_date = fields.String(required=True)
-    user_id = fields.String(required=True)
+    user_id = fields.List(fields.String, required=True)
     rate = fields.Integer(required=True)
 
 

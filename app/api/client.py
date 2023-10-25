@@ -3,7 +3,7 @@ from app import mongo
 from app.dob import organization_info
 from app.token import client_required
 from app.schema import SendTaskSchema
-from app.util import data_now_json_str, mail_send
+from app.util import data_now_json_str, mail_send, pagination
 
 organization_bp = Blueprint("organization", __name__, url_prefix="/organization")
 
@@ -17,7 +17,8 @@ def view_list():
         x["organization_name"] for x in list(mongo.db.orgnizations.find())
     ]
     data = organization_info(all_organization_list)
-    return jsonify({"success": True, "organization-list": data}), 200
+    response = pagination(data)
+    return jsonify(response), 200
 
 
 @client_bp.route("/send-purposal", endpoint="purposal", methods=["POST"])
@@ -26,11 +27,12 @@ def purposal():
     task_schema = SendTaskSchema()
     try:
         task = data_now_json_str(task_schema)
-        company = mongo.db.orgnizations.find_one(
-            {"organization_name": task["organization_name"]}
-        )
-        print(task, company)
-        if company is None:
+        if (
+            mongo.db.orgnizations.find_one(
+                {"organization_name": task["organization_name"]}
+            )
+            is None
+        ):
             return (
                 jsonify({"success": False, "message": "Enter a valid company name"}),
                 400,

@@ -1,7 +1,8 @@
 salary_message = """<h1>Congratulations {}</h1> ,
                    <p> your task details are :- <h2> {} </h2>
                      your total salary is => <h2>{}$ </h2> </p> """
-assign_task = "<h2> Hi </h2> , {} your {} assign you a task :- '{}'"
+assign_task = """<h2> Hi   {} </h2> 
+           <h3>  your {}   assign you a task  :-   <u>  '{}' </u> </h3>"""
 update_status = "<p> Hi, {} status of {} updated to  '{}'</p>"
 update_task_id = "<p> The status of your task-id = '{}'  updated to  '{}'</p>"
 verification_mail = """<h1>Congratulation,</h1>

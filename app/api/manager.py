@@ -7,7 +7,6 @@ from app.util import (
     serialize_doc,
     data_now_json_str,
     task_details,
-    role_valid,
 )
 from app.schema import TaskSchema, UserSchema, InfoSchema, UpdateSchema
 from bson.objectid import ObjectId
@@ -24,10 +23,9 @@ def create_user():
         user = data_now_json_str(user_schema)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
-
     message, response = add_user(user, "employee")
     if response:
-        return jsonify({"success": True, "message": "Register sucessfully"}), 200
+        return jsonify({"success": True, "message": message}), 200
     return jsonify({"success": True, "message": message}), 400
 
 
@@ -38,19 +36,16 @@ def view_task():
     decoded_jwt = token_decode()
     user_id = decoded_jwt["user_id"]
     if task_id is None:
-        all_task = list(task_details("assigned_by", user_id))
-
+        all_task = task_details("assigned_by", user_id)
         if len(all_task) == 0:
             return jsonify({"success": False, "message": "No task is assign"}), 400
-        all_task = serialize_list(all_task)
+        all_task = serialize_doc(all_task)
         return jsonify({"success": True, "details": all_task}), 200
 
     try:
-        task = task_details("_id", ObjectId(task_id))
-        if user_id == task["assigned_by"]:
-            task = serialize_doc(task)
-            return jsonify({"success": True, "details": task})
-        return jsonify({"success": False, "message": ""})
+        task = task_details("assigned_by", user_id)
+        task = serialize_doc(task)
+        return jsonify({"success": True, "details": task})
     except Exception:
         return jsonify({"success": False, "message": "invalid ObjectId"}), 400
 
@@ -81,13 +76,11 @@ def delete_task():
 
     try:
         token = token_decode()
-        task_detail = task_details("_id", ObjectId(task["task_id"]))
-        if token["user_id"] == task_detail["assigned_by"]:
-            message = task_delete(task)
-            if message is True:
-                return jsonify({"success": True, "message": "task is deleted"}), 200
-            return jsonify({"success": False, "message": message}), 400
-        return jsonify({"success": False, "message": "Permission denied"}), 401
+        task_detail = task_details("_id", ObjectId(token["user_id"]))
+        message = task_delete(task)
+        if message is True:
+            return jsonify({"success": True, "message": "task is deleted"}), 200
+        return jsonify({"success": False, "message": message}), 400
     except Exception:
         return jsonify({"success": False, "message": "invalid objectId"}), 400
 
@@ -101,6 +94,7 @@ def update_task():
         task = data_now_json_str(update_schema)
         token = token_decode()
         task_detail = task_details("_id", ObjectId(task["task_id"]))
+
         if token["user_id"] == task_detail["assigned_by"]:
             message = update(task, "manager")
             if message is True:
