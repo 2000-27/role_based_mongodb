@@ -15,7 +15,6 @@ from . import mongo
 from bson.objectid import ObjectId
 from flask_bcrypt import generate_password_hash
 from app.token import token_decode
-import copy
 from app.util import mail_send
 
 
@@ -175,20 +174,20 @@ def user_task(task, assign_by):
         if len(task["user_id"]) != len(all_employee):
             message = "please enter a valid user_id"
             return message, False
+
         task_id = [
-            mongo.db.tasks.insert_one(
-                {
-                    "user_id": str(user["_id"]),
-                    "assigned_by": decoded_jwt["user_id"],
-                    "task_description": task["task_description"],
-                    "status": "todo",
-                    "due_date": task["due_date"],
-                    "rate": task["rate"],
-                    "time_needed": 1,
-                }
-            ).inserted_id
+            {
+                "user_id": str(user["_id"]),
+                "assigned_by": decoded_jwt["user_id"],
+                "task_description": task["task_description"],
+                "status": "todo",
+                "due_date": task["due_date"],
+                "rate": task["rate"],
+                "time_needed": 1,
+            }
             for user in user_info
         ]
+        mongo.db.tasks.insert_many(task_id)
         [mail_send(x, assign_by, "task_created") for x in task_id]
         message = "task is assigned"
         return message, True
@@ -218,15 +217,12 @@ def update(task, updated_by):
             message = check_status(task)
             if message is not None:
                 return message
-
-        temp_dict = copy.deepcopy(task)
-        del temp_dict["task_id"]
         filter = {"_id": ObjectId(task["task_id"])}
-        new_value = {"$set": temp_dict}
+        id = task.pop("task_id")
+        new_value = {"$set": task}
         mongo.db.tasks.update_one(filter, new_value)
-
         if "status" in keysList:
-            mail_send(task["task_id"], updated_by, "updated")
+            mail_send(id, updated_by, "updated")
         return True
 
     message = "Invalid objectId"
