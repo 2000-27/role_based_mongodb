@@ -3,7 +3,6 @@ from app.token import manager_required
 from app.token import token_decode
 from app.dob import add_user, user_task, task_delete, update, salary_slip
 from app.util import (
-    serialize_list,
     serialize_doc,
     data_now_json_str,
     task_details,
@@ -56,10 +55,10 @@ def create_task():
     task_schema = TaskSchema()
     try:
         user = data_now_json_str(task_schema)
-        message = user_task(user, "manager")
+        message, response = user_task(user, "manager")
     except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 401
-    if message is True:
+        return jsonify({"success": False, "message": str(err)}), 400
+    if response:
         return jsonify({"success": True, "message": "Task is assigned"}), 200
     return jsonify({"success": False, "message": message}), 400
 
@@ -72,13 +71,11 @@ def delete_task():
     try:
         task = data_now_json_str(info_schema)
     except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 401
+        return jsonify({"success": False, "message": str(err)}), 400
 
     try:
-        token = token_decode()
-        task_detail = task_details("_id", ObjectId(token["user_id"]))
-        message = task_delete(task)
-        if message is True:
+        message, response = task_delete(task)
+        if response:
             return jsonify({"success": True, "message": "task is deleted"}), 200
         return jsonify({"success": False, "message": message}), 400
     except Exception:

@@ -17,7 +17,12 @@ from app.schema import (
     OrgnizationSchema,
     getInfoSchema,
 )
-from app.util import data_now_json_str, accept_purposal, view_all_employee, pagination
+from app.util import (
+    data_now_json_str,
+    purposal,
+    view_all_employee,
+    pagination,
+)
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -57,16 +62,21 @@ def create_orgnization():
         return jsonify({"success": False, "message": str(err)}), 400
 
 
-@admin_bp.route("/purposal/<token>", endpoint="accept_purposal", methods=["GET"])
-def purposal(token):
-    accept_purposal(token)
+@admin_bp.route("/accept_purposal/<token>", endpoint="accept_purposal", methods=["GET"])
+def accept_purposal(token):
+    purposal(token, "accepted_purposal")
     return jsonify({"success": True, "message": "purposal is accepted"})
+
+
+@admin_bp.route("/reject_purposal/<token>", endpoint="reject_purposal", methods=["GET"])
+def reject_purposal(token):
+    purposal(token, "rejected_purposal")
+    return jsonify({"success": True, "message": "purposal is rejected"})
 
 
 @admin_bp.route("/create-user", endpoint="create_user", methods=["POST"])
 @admin_required
 def create_user():
-    message = ""
     user_schema = UserSchema()
     try:
         user = data_now_json_str(user_schema)
@@ -81,7 +91,6 @@ def create_user():
 @admin_bp.route("/create-task", endpoint="create_task", methods=["POST"])
 @admin_required
 def create_task():
-    message = ""
     task_schema = TaskSchema()
     try:
         task = data_now_json_str(task_schema)
@@ -99,8 +108,8 @@ def delete_task():
     info_schema = InfoSchema()
     try:
         task_id = data_now_json_str(info_schema)
-        message = task_delete(task_id)
-        if message is True:
+        message, response = task_delete(task_id)
+        if response:
             return jsonify({"success": True, "message": "task is deleted"}), 200
         return jsonify({"success": False, "message": message}), 400
     except Exception as err:
@@ -110,7 +119,6 @@ def delete_task():
 @admin_bp.route("/update-task", endpoint="update-task", methods=["PATCH"])
 @admin_required
 def update_task():
-    message = ""
     update_schema = UpdateSchema()
     try:
         task_id = data_now_json_str(update_schema)

@@ -18,6 +18,12 @@ purposal_mail = """<h1> Hi {}.</h1>
                 """
 
 accepted_mail = """ <h1>Congratulation </h1>
-                   <p> your purposal is acceted by <u> '{}'</u> admin of {}
+                   <p> <h3> <u> {}</u> </h3> your purposal is acceted by <u> '{}'</u>  admin of :-{} 
+                        </p> 
+                    """
+
+
+rejected_mail = """ <h3>hi </h3>
+                   <p> your purposal is rejected by <u> '{}'</u> admin of {}
                         </p> 
                     """

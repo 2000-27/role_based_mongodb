@@ -3,7 +3,7 @@ from marshmallow import ValidationError
 from json import dumps, loads
 from app.util import encoded_jwt
 from app.schema import UserSchema, LoginSchema
-from app.dob import add_client
+from app.dob import add_user
 
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -17,7 +17,7 @@ def register():
         result = user_schema.load(request_data)
         data_now_json_str = dumps(result)
         user = loads(data_now_json_str)
-        message, response = add_client(user)
+        message, response = add_user(user, "client")
     except ValidationError as err:
         return jsonify({"success": False, "message": str(err)}), 400
 

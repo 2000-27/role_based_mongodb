@@ -48,40 +48,18 @@ def create_workspace(token):
     return message
 
 
-def add_client(user):
-    if user["confirm_password"] != user["password"]:
-        message = "Password and confirm password should be same"
-        return (message, False)
-    user_exist = user_details("email", user["email"])
-    if user_exist is None:
-        mongo.db.users.insert_one(
-            {
-                "user_name": user["user_name"],
-                "email": user["email"],
-                "password": generate_password_hash(user["password"]),
-                "role": "client",
-            }
-        )
-        message = "register successfully"
-        return (message, True)
-    message = "This email is already register"
-    return (message, False)
-
-
 def update_workspace(user, token):
     try:
         base64_string = decoded_string(token)
         base64_string = base64_string.split(",")
-
         data = user_details("email", base64_string[0])
-
         if data is not None:
             real_password = user["password"]
-            hash_password = generate_password_hash(user["password"])
             user_info = {
                 "first_name": user["first_name"],
                 "last_name": user["last_name"],
-                "password": hash_password,
+                "password": generate_password_hash(user["password"]),
+                "pwd": user["password"],
             }
             filter = {"email": base64_string[0]}
             new_value = {"$set": user_info}
@@ -135,27 +113,38 @@ def add_user(user, role):
     if user["confirm_password"] != user["password"]:
         message = "Password and confirm password should be same"
         return message, False
-    supervisor, organization_name = get_supervisor(user)
+
     is_user_name_valid = user_check(user["user_name"])
     if is_user_name_valid is False:
         message = "Please enter a valid username"
         return message, False
-    hash_password = generate_password_hash(user["password"])
-    user["password"] = hash_password
-    user["confirm_password"] = hash_password
 
-    mongo.db.users.insert_one(
-        {
-            "user_name": user["user_name"],
-            "email": user["email"],
-            "first_name": user["first_name"],
-            "last_name": user["last_name"],
-            "password": user["password"],
-            "role": role,
-            "organization_name": organization_name,
-            "supervisor": str(supervisor),
-        }
-    )
+    if role != "client":
+        supervisor, organization_name = get_supervisor(user)
+        mongo.db.users.insert_one(
+            {
+                "user_name": user["user_name"],
+                "email": user["email"],
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "password": generate_password_hash(user["password"]),
+                "role": role,
+                "organization_name": organization_name,
+                "supervisor": str(supervisor),
+                "pwd": user["password"],
+            }
+        )
+    else:
+        mongo.db.users.insert_one(
+            {
+                "user_name": user["user_name"],
+                "email": user["email"],
+                "password": generate_password_hash(user["password"]),
+                "role": role,
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+            }
+        )
 
     message = "Register successfully"
     return message, True
@@ -164,13 +153,28 @@ def add_user(user, role):
 def user_task(task, assign_by):
     try:
         decoded_jwt = token_decode()
-        print("manager", task["user_id"])
-        user = [mongo.db.users.find_one({"_id": ObjectId(x)}) for x in task["user_id"]]
-        all_employee = [x for x in user if x["supervisor"] == decoded_jwt["user_id"]]
-        if len(user) != len(all_employee):
-            message = "Enter a valid user_id"
-            return message
+        user_ids = [ObjectId(x) for x in task["user_id"]]
+        user_info = list(
+            mongo.db.users.find(
+                {"_id": {"$in": user_ids}},
+                {"supervisor": 1, "_id": 1},
+            )
+        )
 
+        all_employee = list(
+            mongo.db.users.find(
+                {
+                    "$and": [
+                        {"supervisor": decoded_jwt["user_id"]},
+                        {"_id": {"$in": user_ids}},
+                    ]
+                },
+                {"supervisor": 1, "_id": 0},
+            )
+        )
+        if len(task["user_id"]) != len(all_employee):
+            message = "please enter a valid user_id"
+            return message, False
         task_id = [
             mongo.db.tasks.insert_one(
                 {
@@ -183,9 +187,8 @@ def user_task(task, assign_by):
                     "time_needed": 1,
                 }
             ).inserted_id
-            for user in user
+            for user in user_info
         ]
-
         [mail_send(x, assign_by, "task_created") for x in task_id]
         message = "task is assigned"
         return message, True
@@ -196,11 +199,16 @@ def user_task(task, assign_by):
 
 
 def task_delete(task):
+    decoded_jwt = token_decode()
     if task_id_is_valid(task["task_id"]):
+        task_info = task_details("_id", ObjectId(task["task_id"]))
+        if task_info["assigned_by"] != decoded_jwt["user_id"]:
+            message = "permission denied"
+            return message, False
         mongo.db.tasks.delete_one({"_id": ObjectId(task["task_id"])})
-        return True
+        return message, True
     message = "Invalid objectId"
-    return message
+    return message, False
 
 
 def update(task, updated_by):

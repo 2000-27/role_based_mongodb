@@ -13,6 +13,7 @@ from app.helper_string import (
     purposal_mail,
     accepted_mail,
     verification_mail,
+    rejected_mail,
 )
 from app.token import token_decode
 import base64
@@ -82,7 +83,7 @@ def task_id_is_valid(task_id):
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
         if task is None:
             return False
-        return True
+        return task
     except Exception:
         return False
 
@@ -144,7 +145,7 @@ def mail_send(user, role, status, salary=0, payslip="not- generated"):
         link = "http://127.0.0.1:5000/admin/get_organisation/" + base64_string
 
         mail_body = verification_mail.format(link)
-    if status == "purposal":
+    if status == "send_purposal":
         token = token_decode()
         company = mongo.db.orgnizations.find_one(
             {"organization_name": user["organization_name"]}
@@ -155,18 +156,34 @@ def mail_send(user, role, status, salary=0, payslip="not- generated"):
         base64_string = encoded_string(client["email"], admin["email"])
 
         recipients_email = admin["email"]
-        link = "http://127.0.0.1:5000/admin/purposal/" + base64_string
+        accept_link = "http://127.0.0.1:5000/admin/accept_purposal/" + base64_string
+        reject_link = "http://127.0.0.1:5000/admin/reject_purposal/" + base64_string
         mail_body = purposal_mail.format(
             admin["user_name"],
             admin["organization_name"],
             user["task_description"],
-            link,
-            "www.youtube.com",
+            accept_link,
+            reject_link,
         )
 
     if status == "accepted_purposal":
-        mail_body = accepted_mail.format("dfsdfs", "dfsdfd")
-        recipients_email = user
+        client = user_details("email", user)
+        admin = user_details("email", role)
+        mail_body = accepted_mail.format(
+            client["first_name"] + "  " + client["last_name"],
+            admin["first_name"] + " " + admin["last_name"],
+            admin["organization_name"],
+        )
+        recipients_email = client["email"]
+    if status == "rejected_purposal":
+        client = user_details("email", user)
+        admin = user_details("email", role)
+        mail_body = rejected_mail.format(
+            client["first_name"] + "  " + client["last_name"],
+            admin["first_name"] + " " + admin["last_name"],
+            admin["organization_name"],
+        )
+        recipients_email = client["email"]
     if status == "confirmation":
         user = mongo.db.users.find_one({"_id": ObjectId(user)})
         recipients_email = user["email"]
@@ -311,10 +328,10 @@ def encoded_jwt(data):
     return (details, True)
 
 
-def accept_purposal(token):
+def purposal(token, status):
     decoded_data = decoded_string(token)
     decoded_data = decoded_data.split(",")
-    mail_send(decoded_data[0], decoded_data[1], "accepted_purposal")
+    mail_send(decoded_data[0], decoded_data[1], status)
 
 
 def view_all_employee():
@@ -350,10 +367,10 @@ def pagination(data):
     offset = (page - 1) * per_page
     paginated_data = data[offset : offset + per_page]
     response = {
-        "data": paginated_data,
+        "details": paginated_data,
         "page": page,
         "per_page": per_page,
-        "total": len(data),
+        "total_record": len(data),
         "total_pages": math.ceil(len(data) / per_page),
         "sucess": True,
     }

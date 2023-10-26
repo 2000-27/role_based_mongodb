@@ -37,7 +37,11 @@ def purposal():
                 jsonify({"success": False, "message": "Enter a valid company name"}),
                 400,
             )
-        mail_send(task, "client", "purposal")
+        mail_send(task, "client", "send_purposal")
+        return (
+            jsonify({"success": True, "message": "You get a mail on your email Id"}),
+            200,
+        )
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
-    return jsonify({"success": True, "message": "You get a mail on your email Id"}), 200

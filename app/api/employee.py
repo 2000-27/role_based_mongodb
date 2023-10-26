@@ -44,7 +44,6 @@ def view_task():
 @employee_bp.route("/status-change", endpoint="change_status", methods=["PATCH"])
 @employee_required
 def change_status():
-    message = ""
     status_schema = StatusSchema()
     try:
         task = data_now_json_str(status_schema)
