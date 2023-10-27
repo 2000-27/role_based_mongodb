@@ -35,7 +35,7 @@ class UpdateSchema(Schema):
     task_id = fields.String(required=True)
     task_description = fields.Str(required=False)
     status = fields.Str(required=False)
-    email = fields.Email(required=False)
+    user_id = fields.Str(required=False)
 
 
 class ViewSchema(EmployeeSchema):
@@ -50,6 +50,12 @@ class StatusSchema(Schema):
     time_needed = fields.Integer(required=True)
 
 
+class EmployeeUpdateSchema(StatusSchema):
+    status = fields.Str(required=True)
+    time_needed = fields.Integer(required=True)
+    task_id = fields.String(required=False)
+
+
 class OrgnizationSchema(UserSchema):
     gst_number = fields.String(required=True)
     email = fields.Email(required=False)
@@ -60,10 +66,6 @@ class OrgnizationSchema(UserSchema):
     confirm_password = fields.String(required=False)
     technology = fields.List(fields.String, required=True)
     user_name = fields.String(required=False)
-
-
-# first_name = fields.String(required=False)
-# last_name = fields.String(required=False)
 
 
 class getInfoSchema(EmployeeSchema):
