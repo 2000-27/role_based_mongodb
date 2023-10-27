@@ -25,11 +25,13 @@ def view_task():
     if task_id is not None:
         try:
             task = task_details("_id", ObjectId(task_id))
+            print(task)
             if task["user_id"] == decoded_jwt["user_id"]:
                 task = serialize_doc(task)
                 return jsonify({"success": True, "details": task}), 200
             return jsonify({"success": False, "details": "There is no such task"}), 400
-        except Exception:
+        except Exception as err:
+            print(err)
             return jsonify({"success": False, "details": "invalid task Id"}), 400
 
     user = user_details("_id", ObjectId(decoded_jwt["user_id"]))
@@ -47,9 +49,10 @@ def change_status():
     status_schema = StatusSchema()
     try:
         task = data_now_json_str(status_schema)
-        message = update(task, "employee")
-        if message is True:
+        message, response = update(task, "employee")
+        if response:
             return jsonify({"success": True, "message": "status is updated"}), 200
         return jsonify({"success": False, "message": message}), 400
     except Exception as err:
+        print("your err is", err)
         return jsonify({"success": False, "message": str(err)}), 400

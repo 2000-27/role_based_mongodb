@@ -83,7 +83,7 @@ def task_id_is_valid(task_id):
         task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
         if task is None:
             return False
-        return task
+        return True
     except Exception:
         return False
 
@@ -96,10 +96,13 @@ def role_valid(role):
         return True
 
 
-def check_status(task):
-    status_list = ["todo", "in-progress", "under-review", "done"]
-    if task["status"].lower() not in status_list:
-        msg = "enter a valid status"
+def check_status(status, role):
+    if role == "employee":
+        status_list = ["in-progress", "under-review"]
+    if role == "manager":
+        status_list = ["in-progress", "under-review", "done"]
+    if status.lower() not in status_list:
+        msg = "Enter a valid status"
         return msg
     return None
 
@@ -193,24 +196,33 @@ def mail_send(user, role, status, salary=0, payslip="not- generated"):
         task = mongo.db.tasks.find_one({"_id": user})
         user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
         mail_body = assign_task.format(
-            user["user_name"].capitalize(),
+            user["first_name"] + " " + user["last_name"],
             role.capitalize(),
             task["task_description"],
         )
         recipients_email = user["email"]
 
-    # if status == "updated":
-    #     if role == "employee":
-    #         user = mongo.db.users.find_one({"_id": ObjectId(task["assigned_by"])})
-    #         mail_body = update_status.format(
-    #             user["username"].capitalize(), task_id, task["status"]
-    #         )
-    #         recipients_email = user["email"]
+    if status == "updated":
+        task = task_details("_id", ObjectId(user))
+        if role == "employee":
+            user = user_details("_id", ObjectId(task["assigned_by"]))
+            print(user)
+            mail_body = update_status.format(
+                user["first_name"] + " " + user["last_name"],
+                task["_id"],
+                task["status"],
+            )
+            recipients_email = user["email"]
 
-    #     if role == "admin" or role == "manager":
-    #         user = mongo.db.users.find_one({"_id": ObjectId(task["user_id"])})
-    #         mail_body = update_task_id.format(task_id, task["status"])
-    #         recipients_email = task["email"]
+        else:
+            user = user_details("_id", ObjectId(task["user_id"]))
+
+            mail_body = update_task_id.format(
+                user["first_name"] + " " + user["last_name"],
+                task["_id"],
+                task["status"],
+            )
+            recipients_email = user["email"]
     print("mail", mail_body)
     print("recipients", recipients_email)
     # msg = Message(status, sender=sender_email, recipients=[recipients_email])

@@ -183,12 +183,12 @@ def user_task(task, assign_by):
                 "status": "todo",
                 "due_date": task["due_date"],
                 "rate": task["rate"],
-                "time_needed": 1,
+                "time_needed": 0,
             }
             for user in user_info
         ]
-        mongo.db.tasks.insert_many(task_id)
-        [mail_send(x, assign_by, "task_created") for x in task_id]
+        ids = mongo.db.tasks.insert_many(task_id).inserted_ids
+        [mail_send(x, assign_by, "task_created") for x in ids]
         message = "task is assigned"
         return message, True
     except Exception as err:
@@ -210,23 +210,47 @@ def task_delete(task):
     return message, False
 
 
-def update(task, updated_by):
-    if task_id_is_valid(task["task_id"]):
-        keysList = list(task.keys())
-        if "status" in keysList:
-            message = check_status(task)
+def update(record, updated_by):
+    try:
+        decoded_jwt = token_decode()
+        task = task_details("_id", ObjectId(record["task_id"]))
+        if updated_by == "employee":
+            if task["user_id"] != decoded_jwt["user_id"]:
+                message = "invalid task id"
+                return message, False
+            message = check_status(record["status"], "employee")
             if message is not None:
-                return message
-        filter = {"_id": ObjectId(task["task_id"])}
-        id = task.pop("task_id")
-        new_value = {"$set": task}
-        mongo.db.tasks.update_one(filter, new_value)
-        if "status" in keysList:
-            mail_send(id, updated_by, "updated")
-        return True
+                return message, False
+        else:
+            if task["assigned_by"] != decoded_jwt["user_id"]:
+                message = "invalid task id"
+                return message, False
+            keysList = list(record.keys())
+            if "status" in keysList:
+                message = check_status(record["status"], "manager")
+                if message is not None:
+                    return message, False
+            if "user_id" in keysList:
+                user = user_details("_id", ObjectId(record["user_id"]))
+                print(user["supervisor"], decoded_jwt["user_id"])
+                if user is None:
+                    message = "enter a valid user_id"
+                    return message, False
+                if user["supervisor"] != decoded_jwt["user_id"]:
+                    message = "enter a valid user_id"
+                    return message, False
 
-    message = "Invalid objectId"
-    return message
+        filter = {"_id": ObjectId(record["task_id"])}
+        id = record.pop("task_id")
+        new_value = {"$set": record}
+        mongo.db.tasks.update_one(filter, new_value)
+        message = "task is updated successfully"
+        mail_send(id, updated_by, "updated")
+        return message, True
+    except Exception as err:
+        print("your err is ", err)
+        message = "invalid task _id"
+        return message, False
 
 
 def salary_slip(user_id):

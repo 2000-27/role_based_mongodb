@@ -7,7 +7,7 @@ from app.util import (
     data_now_json_str,
     task_details,
 )
-from app.schema import TaskSchema, UserSchema, InfoSchema, UpdateSchema
+from app.schema import TaskSchema, UserSchema, InfoSchema, UpdateSchema, StatusSchema
 from bson.objectid import ObjectId
 
 manager_bp = Blueprint("manager", __name__, url_prefix="manager")
@@ -82,22 +82,17 @@ def delete_task():
         return jsonify({"success": False, "message": "invalid objectId"}), 400
 
 
-@manager_bp.route("/update-task", endpoint="update_task", methods=["POST"])
+@manager_bp.route("/update-task", endpoint="update_task", methods=["PATCH"])
 @manager_required
 def update_task():
-    message = ""
     update_schema = UpdateSchema()
     try:
         task = data_now_json_str(update_schema)
-        token = token_decode()
-        task_detail = task_details("_id", ObjectId(task["task_id"]))
+        message, response = update(task, "manager")
+        if response:
+            return jsonify({"success": True, "message": "task is updated"}), 200
+        return jsonify({"success": False, "message": message}), 400
 
-        if token["user_id"] == task_detail["assigned_by"]:
-            message = update(task, "manager")
-            if message is True:
-                return jsonify({"success": True, "message": "task is updated"}), 200
-            return jsonify({"success": False, "message": message}), 400
-        return jsonify({"success": False, "message": "Permission denied"}), 401
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 

@@ -121,10 +121,10 @@ def delete_task():
 def update_task():
     update_schema = UpdateSchema()
     try:
-        task_id = data_now_json_str(update_schema)
-        message = update(task_id, "admin")
-        if message is True:
-            return jsonify({"success": True, "message": "task is updated "}), 200
+        updated_record = data_now_json_str(update_schema)
+        message, response = update(updated_record, "admin")
+        if response:
+            return jsonify({"success": True, "message": message}), 200
         return jsonify({"success": False, "message": message}), 400
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
